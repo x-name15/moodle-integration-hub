@@ -79,7 +79,7 @@ class registry {
 
         $now = time();
         $record = new \stdClass();
-        $record->name                = clean_param($data->name, PARAM_ALPHANUMEXT);
+        $record->name                = clean_param($data->name, PARAM_TEXT);
         $record->type                = clean_param($data->type ?? 'rest', PARAM_ALPHA);
         $record->base_url            = clean_param($data->base_url, PARAM_URL);
         $record->auth_type           = clean_param($data->auth_type ?? 'bearer', PARAM_ALPHA);
@@ -89,6 +89,7 @@ class registry {
         $record->retry_backoff       = (int)($data->retry_backoff ?? 1);
         $record->cb_failure_threshold = (int)($data->cb_failure_threshold ?? 5);
         $record->cb_cooldown         = (int)($data->cb_cooldown ?? 30);
+        $record->response_queue      = clean_param($data->response_queue ?? '', PARAM_ALPHANUMEXT);
         $record->enabled             = 1;
         $record->timecreated         = $now;
         $record->timemodified        = $now;
@@ -121,7 +122,7 @@ class registry {
         $record = self::get_service_by_id($id);
 
         if (isset($data->name)) {
-            $record->name = clean_param($data->name, PARAM_ALPHANUMEXT);
+            $record->name = clean_param($data->name, PARAM_TEXT);
         }
         if (isset($data->type)) {
             $record->type = clean_param($data->type, PARAM_ALPHA);
@@ -153,6 +154,9 @@ class registry {
         if (isset($data->enabled)) {
             $record->enabled = (int)$data->enabled;
         }
+        if (isset($data->response_queue)) {
+            $record->response_queue = clean_param($data->response_queue, PARAM_ALPHANUMEXT);
+        }
 
         $record->timemodified = time();
 
@@ -168,8 +172,12 @@ class registry {
     public static function delete_service(int $id): bool {
         global $DB;
 
+        // Clean up all dependencies.
         $DB->delete_records('local_integrationhub_cb', ['serviceid' => $id]);
         $DB->delete_records('local_integrationhub_log', ['serviceid' => $id]);
+        $DB->delete_records('local_integrationhub_rules', ['serviceid' => $id]);
+        $DB->delete_records('local_integrationhub_dlq', ['serviceid' => $id]);
+        
         return $DB->delete_records(self::TABLE, ['id' => $id]);
     }
 }

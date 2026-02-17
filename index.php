@@ -34,7 +34,7 @@ require_capability('local/integrationhub:view', $context);
 $canmanage = has_capability('local/integrationhub:manage', $context);
 
 // Handle actions.
-$action   = optional_param('action', '', PARAM_ALPHA);
+$action   = optional_param('action', '', PARAM_ALPHANUMEXT);
 $serviceid = optional_param('serviceid', 0, PARAM_INT);
 $confirm  = optional_param('confirm', 0, PARAM_INT);
 
@@ -47,7 +47,8 @@ $PAGE->set_pagelayout('admin');
 // Process form submission.
 if ($canmanage && $action === 'save' && confirm_sesskey()) {
     $data = new stdClass();
-    $data->name                = required_param('name', PARAM_ALPHANUMEXT);
+    $data->name                = required_param('name', PARAM_TEXT);
+    $data->type                = optional_param('type', 'rest', PARAM_ALPHA);
     $data->base_url            = required_param('base_url', PARAM_URL);
     $data->auth_type           = required_param('auth_type', PARAM_ALPHA);
     $data->auth_token          = optional_param('auth_token', '', PARAM_RAW);
@@ -84,6 +85,17 @@ if ($canmanage && $action === 'resetcircuit' && $serviceid > 0 && confirm_sesske
     $cb = circuit_breaker::from_service($service);
     $cb->reset();
     \core\notification::success(get_string('circuitreset', 'local_integrationhub', $service->name));
+    redirect($PAGE->url);
+}
+
+// Process reset all circuits.
+if ($canmanage && $action === 'resetall' && confirm_sesskey()) {
+    $services = service_registry::get_all_services();
+    foreach ($services as $svc) {
+        $cb = circuit_breaker::from_service($svc);
+        $cb->reset();
+    }
+    \core\notification::success(get_string('allcircuitsreset', 'local_integrationhub'));
     redirect($PAGE->url);
 }
 
@@ -143,13 +155,14 @@ foreach ($statusstats as $stat) {
     else $failcount = (int)$stat->count;
 }
 
-// 2. Latency Trend (Last 200 success requests).
-$logs = $DB->get_records('local_integrationhub_log', ['success' => 1], 'timecreated DESC', '*', 0, 200);
+// 2. Latency Trend (Last 200 requests).
+$logs = $DB->get_records('local_integrationhub_log', [], 'timecreated DESC', '*', 0, 200);
 $chartlabels = [];
 $chartdata = [];
 
 // Process in reverse to get chronological order.
 foreach (array_reverse($logs) as $log) {
+    if ($log->latency_ms === null) continue;
     $chartlabels[] = date('H:i', $log->timecreated);
     $chartdata[] = (int)$log->latency_ms;
 }
@@ -199,10 +212,10 @@ echo html_writer::start_div('card');
 echo html_writer::tag('div', get_string('latencytrend', 'local_integrationhub'), ['class' => 'card-header fw-bold']);
 echo html_writer::start_div('card-body', ['style' => 'height: 300px; position: relative;']);
 echo '<canvas id="ih-chart-latency"></canvas>';
-echo html_writer::end_div();
-echo html_writer::end_div();
-echo html_writer::end_div();
-echo html_writer::end_div(); // Close Row
+echo html_writer::end_div(); // Close card-body
+echo html_writer::end_div(); // Close card
+echo html_writer::end_div(); // Close col-md-8
+echo html_writer::end_div(); // Close Row (Charts Section)
 
 // Include Chart.js (Local) with UMD/AMD Hack.
 echo '<script>
@@ -225,6 +238,10 @@ if ($canmanage) {
         'id'    => 'ih-btn-add',
         'type'  => 'button',
     ]);
+    
+    $resetallurl = new moodle_url($PAGE->url, ['action' => 'resetall', 'sesskey' => sesskey()]);
+    echo html_writer::link($resetallurl, '<i class="fa fa-refresh"></i> ' . get_string('resetallcircuits', 'local_integrationhub'), 
+        ['class' => 'btn btn-outline-warning']);
 }
 echo html_writer::link(
     new moodle_url('/local/integrationhub/logs.php'),
@@ -264,15 +281,32 @@ $fields = [
     ['name', 'servicename', 'text', $editservice->name ?? '', true],
     ['base_url', 'baseurl', 'url', $editservice->base_url ?? '', true],
     ['auth_token', 'authtoken', 'password', $editservice->auth_token ?? '', false],
+    ['response_queue', 'response_queue', 'text', $editservice->response_queue ?? '', false],
     ['timeout', 'timeout', 'number', $editservice->timeout ?? 5, false],
     ['max_retries', 'maxretries', 'number', $editservice->max_retries ?? 3, false],
     ['retry_backoff', 'retrybackoff', 'number', $editservice->retry_backoff ?? 1, false],
     ['cb_failure_threshold', 'cbfailurethreshold', 'number', $editservice->cb_failure_threshold ?? 5, false],
     ['cb_cooldown', 'cbcooldown', 'number', $editservice->cb_cooldown ?? 30, false],
-    ['response_queue', 'response_queue', 'text', $editservice->response_queue ?? '', false],
 ];
 
 echo '<div class="row">';
+
+// Service type select.
+echo '<div class="col-md-6 mb-3">';
+echo html_writer::tag('label', get_string('col_type', 'local_integrationhub'), [
+    'for' => 'ih-type', 'class' => 'form-label', 'style' => 'display:block; margin-bottom:6px;',
+]);
+echo html_writer::start_tag('select', [
+    'name' => 'type', 'id' => 'ih-type', 'class' => 'form-select',
+]);
+$selectedrest = (($editservice->type ?? 'rest') === 'rest') ? 'selected' : '';
+$selectedamqp = (($editservice->type ?? '') === 'amqp') ? 'selected' : '';
+$selectedsoap = (($editservice->type ?? '') === 'soap') ? 'selected' : '';
+echo "<option value='rest' {$selectedrest}>REST</option>";
+echo "<option value='amqp' {$selectedamqp}>AMQP (RabbitMQ)</option>";
+echo "<option value='soap' {$selectedsoap}>SOAP (Future)</option>";
+echo html_writer::end_tag('select');
+echo '</div>';
 
 // Auth type select.
 echo '<div class="col-md-6 mb-3">';
@@ -287,6 +321,50 @@ $selectedapikey = (($editservice->auth_type ?? '') === 'apikey') ? 'selected' : 
 echo "<option value='bearer' {$selectedbearer}>" . get_string('authtype_bearer', 'local_integrationhub') . "</option>";
 echo "<option value='apikey' {$selectedapikey}>" . get_string('authtype_apikey', 'local_integrationhub') . "</option>";
 echo html_writer::end_tag('select');
+echo '</div>';
+
+// JavaScript to toggle visibility.
+echo '<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const typeSelect = document.getElementById("ih-type");
+    const authTypeContainer = document.getElementById("ih-auth_type").closest(".col-md-6");
+    const authTypeLabel = authTypeContainer.querySelector("label");
+
+    function toggleAuthType() {
+        if (typeSelect.value === "amqp") {
+            authTypeContainer.classList.add("d-none");
+        } else {
+            authTypeContainer.classList.remove("d-none");
+        }
+    }
+
+    typeSelect.addEventListener("change", toggleAuthType);
+    toggleAuthType();
+});
+</script>';
+
+// AMQP Connection Builder (Conditional Visibility via JS).
+echo '<div id="ih-amqp-builder" class="col-12 d-none mb-3">';
+echo '<div class="card bg-light border-info"><div class="card-body">';
+echo '<h6 class="card-title text-info"><i class="fa fa-magic"></i> ' . get_string('amqp_builder', 'local_integrationhub') . '</h6>';
+echo '<div class="row">';
+$amqpfields = [
+    ['amqp_host', 'amqp_host', 'text', 'localhost', 'localhost'],
+    ['amqp_port', 'amqp_port', 'number', '5672', '5672'],
+    ['amqp_user', 'amqp_user', 'text', 'guest', 'guest'],
+    ['amqp_pass', 'amqp_pass', 'password', 'guest', ''],
+    ['amqp_vhost', 'amqp_vhost', 'text', '/', '/'],
+];
+foreach ($amqpfields as $af) {
+    echo '<div class="col-md-2 mb-2">';
+    echo html_writer::tag('label', get_string($af[1], 'local_integrationhub'), ['class' => 'small', 'style' => 'display:block; margin-bottom:2px;']);
+    echo html_writer::empty_tag('input', [
+        'type' => $af[2], 'id' => "ih-{$af[0]}", 'value' => $af[3], 'class' => 'form-control form-control-sm ih-amqp-sync', 'placeholder' => $af[4]
+    ]);
+    echo '</div>';
+}
+echo '</div>'; // .row
+echo '</div></div>';
 echo '</div>';
 
 foreach ($fields as $field) {
@@ -309,6 +387,14 @@ foreach ($fields as $field) {
         $attrs['min'] = '0';
     }
     echo html_writer::empty_tag('input', $attrs);
+    if ($fname === 'base_url') {
+        echo html_writer::tag('div', get_string('base_url_help', 'local_integrationhub'), [
+            'class' => 'form-text text-muted', 'id' => 'ih-base_url-help'
+        ]);
+    }
+    if ($fname === 'response_queue') {
+        echo html_writer::tag('div', get_string('response_queue_help', 'local_integrationhub'), ['class' => 'form-text text-muted']);
+    }
     echo '</div>';
 }
 
@@ -343,7 +429,7 @@ if (empty($services)) {
 
     // Header.
     echo '<thead class="table-dark"><tr>';
-    $headers = ['col_name', 'col_baseurl', 'col_authtype', 'col_circuit', 'col_latency',
+    $headers = ['col_name', 'col_type', 'col_baseurl', 'col_authtype', 'col_circuit', 'col_latency',
                 'col_errors', 'col_enabled'];
     if ($canmanage) {
         $headers[] = 'col_actions';
@@ -358,6 +444,9 @@ if (empty($services)) {
     foreach ($services as $svc) {
         echo '<tr>';
         echo html_writer::tag('td', s($svc->name));
+        $typelabel = strtoupper($svc->type ?? 'rest');
+        $typeclass = ($svc->type ?? 'rest') === 'rest' ? 'badge bg-secondary' : 'badge bg-dark';
+        echo html_writer::tag('td', html_writer::tag('span', $typelabel, ['class' => $typeclass]));
         echo html_writer::tag('td', html_writer::tag('code', s($svc->base_url)));
 
         // Auth type badge.
@@ -458,6 +547,8 @@ $PAGE->requires->js_call_amd('local_integrationhub/dashboard', 'init', [
         'success'    => get_string('success', 'local_integrationhub'),
         'failure'    => get_string('failure', 'local_integrationhub'),
         'avglatency' => get_string('avglatency', 'local_integrationhub'),
+        'url_help_rest' => get_string('url_help_rest', 'local_integrationhub'),
+        'url_help_amqp' => get_string('url_help_amqp', 'local_integrationhub'),
     ]
 ]);
 

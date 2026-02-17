@@ -95,12 +95,17 @@ class dispatch_event_task extends \core\task\adhoc_task {
 
         try {
             $gateway = gateway::instance();
+            
+            // Log payload for debugging.
+            mtrace("Payload: " . json_encode($payload));
+            
             $response = $gateway->request($service->name, $endpoint, $payload, $method);
 
             if ($response->is_ok()) {
                 mtrace("Success: HTTP {$response->httpstatus}");
             } else {
                 mtrace("Failed: HTTP {$response->httpstatus} - {$response->error}");
+                mtrace("Response Body: " . $response->body);
                 // If the gateway fails after its own internal retries, we throw to let Moodle retry the task.
                 throw new \moodle_exception('gateway_error', 'local_integrationhub', '', $response->error);
             }

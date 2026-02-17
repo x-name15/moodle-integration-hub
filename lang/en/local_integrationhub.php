@@ -53,10 +53,16 @@ $string['viewlogs'] = 'View Logs';
 $string['refreshstatus'] = 'Refresh Status';
 
 // Service form.
-$string['servicename'] = 'Service name';
-$string['servicename_help'] = 'A unique alphanumeric slug for this service (e.g., "judgeman", "analytics").';
-$string['baseurl'] = 'Base URL';
-$string['baseurl_help'] = 'The base URL of the external service (e.g., "https://api.example.com").';
+$string['servicename'] = 'Identification Name / Slug';
+$string['servicename_help'] = 'A unique identifier for this service. This name will be used in rules and code. Spaces are allowed but alphanumeric is recommended.';
+$string['resetallcircuits'] = 'Reset All Circuits';
+$string['allcircuitsreset'] = 'All service circuits have been reset.';
+$string['resetcircuit'] = 'Reset Circuit';
+$string['circuitreset'] = 'Circuit breaker for "{$a}" has been reset.';
+$string['baseurl'] = 'Base URL / Connection';
+$string['base_url_help'] = 'Base URL of the external service.';
+$string['url_help_rest'] = 'Example: https://api.service.com/v1';
+$string['url_help_amqp'] = 'Example: amqp://user:pass@host:5672/vhost';
 $string['authtype'] = 'Authentication type: ';
 $string['authtype_bearer'] = 'Bearer Token';
 $string['authtype_apikey'] = 'API Key';
@@ -143,11 +149,22 @@ $string['rulecreated'] = 'Rule created successfully.';
 $string['ruleupdated'] = 'Rule updated successfully.';
 $string['ruledeleted'] = 'Rule deleted.';
 $string['deleteconfirmrule'] = 'Are you sure you want to delete this rule?';
+$string['col_type'] = 'Type';
 $string['col_event'] = 'Event';
 $string['col_service'] = 'Service';
 $string['col_endpoint'] = 'Endpoint';
 $string['col_enabled'] = 'Enabled';
 $string['norules'] = 'No integration rules defined yet.';
+$string['servicetype'] = 'Service Type';
+$string['type_rest'] = 'REST API';
+$string['type_amqp'] = 'AMQP (RabbitMQ)';
+$string['type_soap'] = 'SOAP (Legacy)';
+$string['amqp_builder'] = 'AMQP Connection Builder';
+$string['amqp_host'] = 'Host';
+$string['amqp_port'] = 'Port';
+$string['amqp_user'] = 'User';
+$string['amqp_pass'] = 'Password';
+$string['amqp_vhost'] = 'vHost';
 
 // Queue.
 $string['queue'] = 'Queue Monitor';
@@ -170,6 +187,13 @@ $string['delete_dlq'] = 'Delete';
 $string['no_dlq_items'] = 'No events in the dead letter queue.';
 $string['dlq_replayed'] = 'Event re-queued successfully.';
 $string['dlq_deleted'] = 'Event deleted from the dead letter queue.';
+$string['task_deleted'] = 'Task deleted successfully.';
+$string['task_delete_failed'] = 'Failed to delete task.';
+$string['orphans_purged'] = '{$a} orphan tasks purged successfully.';
+$string['purge_orphans'] = 'Purge Orphans';
+$string['purge_orphans_confirm'] = 'Are you sure you want to delete all tasks whose rules have been deleted?';
+$string['task_delete_confirm'] = 'Are you sure you want to delete this task?';
+$string['dlq_delete_confirm'] = 'Are you sure you want to delete this failed event?';
 
 // Dashboard Charts.
 $string['integrationstatus'] = 'Integration Status (All time)';

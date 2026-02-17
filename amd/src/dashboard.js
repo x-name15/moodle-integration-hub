@@ -110,6 +110,57 @@ define([], function () {
                     }
                 });
             }
+
+            // ---- Dynamic URL Help & Builder ----
+            const typeField = document.getElementById('ih-type');
+            const urlField = document.getElementById('ih-base_url');
+            const urlHelp = document.getElementById('ih-base_url-help');
+            const amqpBuilder = document.getElementById('ih-amqp-builder');
+
+            if (typeField && urlHelp) {
+                /**
+                 * Update the UI fields visibility and help text based on the selected service type.
+                 * @returns {void}
+                 */
+                const updateUiForType = function () {
+                    const type = typeField.value || 'rest';
+                    if (type === 'amqp') {
+                        urlHelp.textContent = strings.url_help_amqp;
+                        if (amqpBuilder) {
+                            amqpBuilder.classList.remove('d-none');
+                        }
+                    } else {
+                        urlHelp.textContent = strings.url_help_rest;
+                        if (amqpBuilder) {
+                            amqpBuilder.classList.add('d-none');
+                        }
+                    }
+                };
+
+                /**
+                 * Build the AMQP connection URL from the individual builder fields.
+                 * @returns {void}
+                 */
+                const syncAmqpUrl = function () {
+                    const host = document.getElementById('ih-amqp_host').value || 'localhost';
+                    const port = document.getElementById('ih-amqp_port').value || '5672';
+                    const user = document.getElementById('ih-amqp_user').value || 'guest';
+                    const pass = document.getElementById('ih-amqp_pass').value || 'guest';
+                    let vhost = document.getElementById('ih-amqp_vhost').value || '/';
+
+                    if (vhost !== '/' && vhost.startsWith('/')) {
+                        vhost = vhost.substring(1);
+                    }
+
+                    const scheme = (port === '5671') ? 'amqps' : 'amqp';
+                    urlField.value = `${scheme}://${user}:${pass}@${host}:${port}/${vhost}`;
+                };
+                typeField.addEventListener('change', updateUiForType);
+                document.querySelectorAll('.ih-amqp-sync').forEach(el => {
+                    el.addEventListener('input', syncAmqpUrl);
+                });
+                updateUiForType();
+            }
         }
     };
 });

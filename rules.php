@@ -24,7 +24,7 @@ $context = context_system::instance();
 require_capability('local/integrationhub:view', $context);
 $canmanage = has_capability('local/integrationhub:manage', $context);
 
-$action = optional_param('action', '', PARAM_ALPHA);
+$action = optional_param('action', '', PARAM_ALPHANUMEXT);
 $ruleid = optional_param('ruleid', 0, PARAM_INT);
 $confirm = optional_param('confirm', 0, PARAM_INT);
 
@@ -65,6 +65,7 @@ if ($canmanage && $action === 'delete' && $ruleid > 0 && confirm_sesskey()) {
 // Load data.
 $rules = rules_registry::get_all_rules();
 $services = service_registry::get_all_services();
+$allevents = rules_registry::get_all_events_dynamic();
 $commonevents = rules_registry::get_common_events();
 $editrule = null;
 
@@ -117,6 +118,9 @@ echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'ruleid', 'v
 
 echo '<div class="row">';
 
+// Get all events from system.
+$allevents = rules_registry::get_all_events_dynamic();
+
 // Event selector (Datalist to allow custom events).
 echo '<div class="col-md-6 mb-3">';
 echo html_writer::tag('label', get_string('rule_event', 'local_integrationhub'), ['for' => 'ih-eventname', 'class' => 'form-label', 'style' => 'display:block; margin-bottom:6px;']);
@@ -131,7 +135,7 @@ echo html_writer::empty_tag('input', [
     'value' => $editrule->eventname ?? ''
 ]);
 echo html_writer::start_tag('datalist', ['id' => 'ih-eventlist']);
-foreach ($commonevents as $classname => $label) {
+foreach ($allevents as $classname => $label) {
     echo "<option value='{$classname}'>" . s($label) . "</option>";
 }
 echo html_writer::end_tag('datalist');
@@ -232,7 +236,8 @@ if (empty($rules)) {
     
     foreach ($rules as $rule) {
         echo '<tr>';
-        echo '<td>' . s($commonevents[$rule->eventname] ?? $rule->eventname) . '<br><small class="text-muted">' . s($rule->eventname) . '</small></td>';
+        $displayname = rules_registry::get_event_display_name($rule->eventname);
+        echo '<td>' . s($displayname) . '<br><small class="text-muted">' . s($rule->eventname) . '</small></td>';
         
         $svcname = $services[$rule->serviceid]->name ?? 'Unknown ID:' . $rule->serviceid;
         echo '<td>' . s($svcname) . '</td>';
@@ -261,6 +266,10 @@ if (empty($rules)) {
 }
 
 // Initialize AMD module.
-$PAGE->requires->js_call_amd('local_integrationhub/rules', 'init');
+$servicetypes = [];
+foreach ($services as $s) {
+    $servicetypes[$s->id] = $s->type ?? 'rest';
+}
+$PAGE->requires->js_call_amd('local_integrationhub/rules', 'init', [$servicetypes]);
 
 echo $OUTPUT->footer();

@@ -20,51 +20,20 @@ class amqp implements contract {
      */
     public function execute(\stdClass $service, string $endpoint, array $payload, string $method = ''): array {
         $starttime = microtime(true);
-        $attempts = 1; // AMQP publish attempt.
-
-        // Parse connection string: amqp://user:pass@host:port/vhost
-        // For simplicity, we assume standard URL format.
-        $parsed = parse_url($service->base_url);
-        if (!$parsed || !isset($parsed['host'])) {
-             return $this->error_result('Invalid AMQP connection string', $starttime);
-        }
-
-        $host = $parsed['host'];
-        $port = $parsed['port'] ?? 5672;
-        $user = $parsed['user'] ?? 'guest';
-        $pass = $parsed['pass'] ?? 'guest';
-        $vhost = isset($parsed['path']) && $parsed['path'] !== '/' ? substr($parsed['path'], 1) : '/';
+        $attempts = 1;
 
         try {
-            // 1. Connect.
-            $connection = new AMQPStreamConnection($host, $port, $user, $pass, $vhost, false, 
-                'AMQPLAIN', 
-                null, 
-                'en_US', 
-                (int)$service->timeout, // Connection timeout
-                (int)$service->timeout  // Read/Write timeout
-            );
+            $connection = amqp_helper::create_connection($service->base_url, (int)$service->timeout);
             $channel = $connection->channel();
-
-            // 2. Publish.
-            // We assume 'endpoint' is the routing key.
-            // Exchange handling: For now, we publish to default exchange (direct to queue) or can be configured.
-            // Let's assume we publish to a default exchange if provided, or default '' exchange.
-            // Current MVP: Direct publish to queue named in endpoint.
-            
-            $routingkey = ltrim($endpoint, '/'); // Remove leading slash if present.
-            
-            // Declare queue loosely to ensure it exists? 
-            // Better to assume infrastructure exists or use Passive declare.
-            // For MVP: Just publish.
-            
+            $routingkey = ltrim($endpoint, '/'); 
+            amqp_helper::ensure_queue($channel, $routingkey);
             $msgbody = json_encode($payload);
             $msg = new AMQPMessage($msgbody, [
                 'delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT,
                 'content_type' => 'application/json'
             ]);
 
-            $exchange = ''; // Default exchange.
+            $exchange = ''; 
             
             $channel->basic_publish($msg, $exchange, $routingkey);
 

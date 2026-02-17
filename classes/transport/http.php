@@ -65,7 +65,7 @@ class http implements contract {
             $curlerr = $curl->get_errno();
 
             if ($curlerr) {
-                throw new \Exception('cURL error ' . $curlerr . ': ' . $curl->error);
+                throw new \Exception("cURL error {$curlerr} for {$url}: " . $curl->error);
             }
 
             // Determine success (2xx).

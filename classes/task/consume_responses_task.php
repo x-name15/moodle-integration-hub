@@ -21,6 +21,7 @@ defined('MOODLE_INTERNAL') || die();
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use local_integrationhub\webhook_handler;
 use local_integrationhub\service\registry as service_registry;
+use local_integrationhub\transport\amqp_helper;
 
 /**
  * Scheduled task to consume response messages from AMQP queues.
@@ -76,29 +77,15 @@ class consume_responses_task extends \core\task\scheduled_task {
      * @param \stdClass $service The service record.
      */
     private function consume_from_service(\stdClass $service): void {
-        $parsed = parse_url($service->base_url);
-        if (!$parsed || !isset($parsed['host'])) {
-            mtrace("  MIH Consumer [{$service->name}]: Invalid AMQP URL, skipping.");
-            return;
-        }
-
-        $host  = $parsed['host'];
-        $port  = $parsed['port'] ?? 5672;
-        $user  = $parsed['user'] ?? 'guest';
-        $pass  = $parsed['pass'] ?? 'guest';
-        $vhost = isset($parsed['path']) && $parsed['path'] !== '/' ? substr($parsed['path'], 1) : '/';
         $queue = trim($service->response_queue);
-
         mtrace("  MIH Consumer [{$service->name}]: Consuming from queue '{$queue}'...");
 
         try {
-            $connection = new AMQPStreamConnection(
-                $host, $port, $user, $pass, $vhost,
-                false, 'AMQPLAIN', null, 'en_US',
-                (int)($service->timeout ?: 5),
-                (int)($service->timeout ?: 5)
-            );
+            $connection = amqp_helper::create_connection($service->base_url, (int)($service->timeout ?: 5));
             $channel = $connection->channel();
+
+            // Ensure queue exists before consuming.
+            amqp_helper::ensure_queue($channel, $queue);
 
             $consumed = 0;
 

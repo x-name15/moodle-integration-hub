@@ -63,4 +63,57 @@ class queue_manager {
         
         return $DB->update_record('task_adhoc', $update);
     }
+
+    /**
+     * Delete a single adhoc task by ID.
+     *
+     * @param int $taskid The adhoc task ID.
+     * @return bool True on success.
+     */
+    public static function delete_task(int $taskid): bool {
+        global $DB;
+        return $DB->delete_records('task_adhoc', [
+            'id' => $taskid,
+            'classname' => '\local_integrationhub\task\dispatch_event_task',
+        ]);
+    }
+
+    /**
+     * Purge all orphan tasks (tasks whose rule no longer exists).
+     *
+     * @return int Number of tasks purged.
+     */
+    public static function purge_orphan_tasks(): int {
+        global $DB;
+
+        $tasks = $DB->get_records('task_adhoc', [
+            'classname' => '\local_integrationhub\task\dispatch_event_task',
+        ]);
+
+        $count = 0;
+        foreach ($tasks as $task) {
+            $data = json_decode($task->customdata);
+            $ruleid = $data->ruleid ?? 0;
+
+            $purge = false;
+            if ($ruleid <= 0) {
+                $purge = true;
+            } else {
+                $rule = $DB->get_record('local_integrationhub_rules', ['id' => $ruleid]);
+                if (!$rule) {
+                    $purge = true;
+                } else if (!$DB->record_exists('local_integrationhub_svc', ['id' => $rule->serviceid])) {
+                    // Rule exists but service is gone.
+                    $purge = true;
+                }
+            }
+
+            if ($purge) {
+                $DB->delete_records('task_adhoc', ['id' => $task->id]);
+                $count++;
+            }
+        }
+
+        return $count;
+    }
 }

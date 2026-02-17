@@ -30,7 +30,7 @@ $context = context_system::instance();
 require_capability('local/integrationhub:view', $context);
 
 $canmanage = has_capability('local/integrationhub:manage', $context);
-$action = optional_param('action', '', PARAM_ALPHA);
+$action = optional_param('action', '', PARAM_ALPHANUMEXT);
 $taskid = optional_param('taskid', 0, PARAM_INT);
 $dlqid = optional_param('dlqid', 0, PARAM_INT);
 
@@ -48,6 +48,21 @@ if ($canmanage && !empty($action) && confirm_sesskey()) {
         } else {
             \core\notification::error(get_string('task_retry_failed', 'local_integrationhub'));
         }
+        redirect($PAGE->url);
+    }
+
+    if ($action === 'deletetask' && $taskid > 0) {
+        if (\local_integrationhub\task\queue_manager::delete_task($taskid)) {
+            \core\notification::success(get_string('task_deleted', 'local_integrationhub'));
+        } else {
+            \core\notification::error(get_string('task_delete_failed', 'local_integrationhub'));
+        }
+        redirect($PAGE->url);
+    }
+
+    if ($action === 'purgeorphans') {
+        $count = \local_integrationhub\task\queue_manager::purge_orphan_tasks();
+        \core\notification::success(get_string('orphans_purged', 'local_integrationhub', $count));
         redirect($PAGE->url);
     }
 
@@ -110,6 +125,32 @@ echo html_writer::tag('style', "
 echo html_writer::tag('h4', get_string('queue', 'local_integrationhub'), ['class' => 'mb-3']);
 echo html_writer::tag('p', get_string('queue_desc', 'local_integrationhub'), ['class' => 'text-muted']);
 
+// Purge orphans button (only if there are tasks with deleted rules).
+$hasorphans = false;
+foreach ($tasks as $t) {
+    if (strpos($t->eventname, 'Unknown') !== false || strpos($t->servicename, 'Unknown') !== false) {
+        $hasorphans = true;
+        break;
+    }
+}
+if ($canmanage && $hasorphans) {
+    echo '<div class="mb-3">';
+    echo html_writer::start_tag('form', [
+        'method' => 'post',
+        'action' => $PAGE->url->out_omit_querystring(),
+        'style'  => 'display: inline;',
+    ]);
+    echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'action', 'value' => 'purgeorphans']);
+    echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
+    echo html_writer::tag('button', '<i class="fa fa-broom"></i> ' . get_string('purge_orphans', 'local_integrationhub'), [
+        'type'    => 'submit',
+        'class'   => 'btn btn-warning btn-sm',
+        'onclick' => "return confirm('" . addslashes_js(get_string('purge_orphans_confirm', 'local_integrationhub')) . "');",
+    ]);
+    echo html_writer::end_tag('form');
+    echo '</div>';
+}
+
 if (empty($tasks)) {
     echo html_writer::div(get_string('no_pending_tasks', 'local_integrationhub'), 'alert alert-success');
 } else {
@@ -156,8 +197,7 @@ if (empty($tasks)) {
         // Actions.
         if ($canmanage) {
             echo '<td>';
-            // Always show the cell. Only show retry if applicable.
-            if ($task->faildelay > 0 || $task->nextruntime < time()) { // Fixed condition: retry if failed or overdue/past.
+            if ($task->faildelay > 0 || $task->nextruntime < time()) {
                 // Retry button.
                 $retryurl = new moodle_url($PAGE->url, [
                     'action'  => 'retry', 
@@ -165,12 +205,21 @@ if (empty($tasks)) {
                     'sesskey' => sesskey()
                 ]);
                 echo html_writer::link($retryurl, '<i class="fa fa-refresh"></i> ' . get_string('retry', 'local_integrationhub'), [
-                    'class' => 'btn btn-sm btn-primary',
+                    'class' => 'btn btn-sm btn-primary me-1',
                     'title' => get_string('retry', 'local_integrationhub')
                 ]);
-            } else {
-                 echo '-';
             }
+            // Delete button (always visible).
+            $deleteurl = new moodle_url($PAGE->url, [
+                'action'  => 'deletetask',
+                'taskid'  => $task->id,
+                'sesskey' => sesskey()
+            ]);
+            echo html_writer::link($deleteurl, '<i class="fa fa-trash"></i>', [
+                'class'   => 'btn btn-sm btn-outline-danger',
+                'title'   => get_string('delete'),
+                'onclick' => "return confirm('" . addslashes_js(get_string('task_delete_confirm', 'local_integrationhub')) . "');",
+            ]);
             echo '</td>';
         }
 
@@ -213,7 +262,7 @@ if (empty($dlqitems)) {
             $deleteurl = new moodle_url($PAGE->url, ['action' => 'delete_dlq', 'dlqid' => $item->id, 'sesskey' => sesskey()]);
             echo html_writer::link($deleteurl, '<i class="fa fa-trash"></i>', [
                 'class' => 'btn btn-sm btn-outline-danger',
-                'onclick' => "return confirm('Are you sure you want to delete this failed event?');"
+                'onclick' => "return confirm('" . addslashes_js(get_string('dlq_delete_confirm', 'local_integrationhub')) . "');"
             ]);
             echo '</td>';
         }

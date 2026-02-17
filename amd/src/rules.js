@@ -1,13 +1,40 @@
 define(['jquery', 'core/ajax', 'core/notification', 'core/modal_factory'],
     function ($, Ajax, Notification, ModalFactory) {
         return {
-            init: function () {
+            init: function (serviceTypes) {
                 var formContainer = $('#ih-rule-form');
                 var btnAdd = $('#ih-btn-add');
                 var btnCancel = $('#ih-btn-cancel');
                 var btnPreview = $('#ih-btn-preview');
                 var templateField = $('#ih-template');
                 var eventField = $('#ih-eventname');
+                var serviceField = $('#ih-serviceid');
+                var endpointField = $('#ih-endpoint');
+                var endpointLabel = $('label[for="ih-endpoint"]');
+                /**
+                 * Update the endpoint field label and placeholder based on the selected service type.
+                 * @returns {void}
+                 */
+                function updateEndpointLabel() {
+                    var svcId = serviceField.val();
+                    var type = serviceTypes[svcId] || 'rest';
+                    if (type === 'amqp') {
+                        endpointLabel.text('Queue Name / Routing Key');
+                        endpointField.attr('placeholder', 'e.g. user_sync_queue');
+                    } else if (type === 'soap') {
+                        endpointLabel.text('SOAP Action / Method');
+                        endpointField.attr('placeholder', 'e.g. CreateUser');
+                    } else {
+                        endpointLabel.text('Endpoint Path');
+                        endpointField.attr('placeholder', 'e.g. /api/v1/users');
+                    }
+                }
+
+                if (serviceField.length) {
+                    serviceField.on('change', updateEndpointLabel);
+                    // Initial update for edit mode.
+                    updateEndpointLabel();
+                }
 
                 if (btnAdd.length) {
                     btnAdd.on('click', function () {

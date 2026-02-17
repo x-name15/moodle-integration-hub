@@ -116,32 +116,77 @@ class registry {
     }
 
     /**
+     * Get a human-readable name for an event class.
+     * 
+     * @param string $classname
+     * @return string
+     */
+    public static function get_event_display_name(string $classname): string {
+        // If class exists, try to use Moodle's get_name().
+        $classname = ltrim($classname, '\\');
+        if (class_exists("\\{$classname}")) {
+            try {
+                $fullclass = "\\{$classname}";
+                if (is_a($fullclass, \core\event\base::class, true)) {
+                    return $fullclass::get_name();
+                }
+            } catch (\Exception $e) {
+                // Fallback to prettifier.
+            }
+        }
+
+        // Prettify fallback: \core\event\user_loggedinas -> User Logged In As
+        $parts = explode('\\', $classname);
+        $last = end($parts);
+        
+        // Convert snake_case or StudlyCase to Title Case.
+        $pretty = str_replace('_', ' ', $last);
+        $pretty = preg_replace('/([a-z])([A-Z])/', '$1 $2', $pretty);
+        
+        return ucwords($pretty);
+    }
+
+    /**
+     * Get all available events in the system dynamically.
+     * 
+     * @return array [classname => Display Name]
+     */
+    public static function get_all_events_dynamic(): array {
+        $events = \core_component::get_component_classes_in_namespace(null, 'event');
+        $list = [];
+
+        foreach (array_keys($events) as $event) {
+            if (is_a($event, \core\event\base::class, true)) {
+                $reflection = new \ReflectionClass($event);
+                if (!$reflection->isAbstract()) {
+                    $list["\\{$event}"] = self::get_event_display_name($event);
+                }
+            }
+        }
+
+        asort($list);
+        return $list;
+    }
+
+    /**
      * Get a list of common events for the dropdown.
      * 
      * @return array [classname => Display Name]
      */
     public static function get_common_events(): array {
-        return [
-            '\core\event\user_created' => 'User created',
-            '\core\event\user_updated' => 'User updated',
-            '\core\event\user_deleted' => 'User deleted',
-            '\core\event\user_loggedin' => 'User logged in',
-            '\core\event\user_loggedout' => 'User logged out',
-            '\core\event\course_created' => 'Course created',
-            '\core\event\course_completed' => 'Course completed',
-            '\core\event\course_deleted' => 'Course deleted',
-            '\core\event\user_enrolment_created' => 'User enrolment created',
-            '\core\event\user_enrolment_deleted' => 'User enrolment deleted',
-            '\core\event\user_graded' => 'User graded',
-            '\core\event\group_created' => 'Group created',
-            '\core\event\group_deleted' => 'Group deleted',
-            '\core\event\group_member_added' => 'Group member added',
-            '\core\event\role_assigned' => 'Role assigned',
-            '\core\event\role_unassigned' => 'Role unassigned',
-            '\core\event\course_module_created' => 'Module created',
-            '\core\event\course_module_updated' => 'Module updated',
-            '\core\event\course_module_deleted' => 'Module deleted',
-            '\core\event\course_module_completion_updated' => 'Module completion updated',
+        $common = [
+            '\core\event\user_created',
+            '\core\event\user_loggedin',
+            '\core\event\course_created',
+            '\core\event\user_enrolment_created',
+            '\core\event\user_graded',
         ];
+
+        $list = [];
+        foreach ($common as $classname) {
+            // Internal call to resolve name but avoiding the common list again.
+            $list[$classname] = self::get_event_display_name($classname);
+        }
+        return $list;
     }
 }
