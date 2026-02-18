@@ -21,10 +21,7 @@ A centralized integration layer for Moodle — connect any Moodle event to any e
 
 ## 📖 Documentation
 
-Full technical documentation is available in the [`docs/`](docs/README.md) folder.
-
-- [🇬🇧 English Documentation](docs/en/01-overview.md)
-- [🇪🇸 Documentación en Español](docs/es/01-descripcion-general.md)
+Full technical documentation is available in [mih.mrjacket.dev](mih.mrjacket.dev)
 
 ## Quick Start
 
