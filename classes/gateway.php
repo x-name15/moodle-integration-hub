@@ -37,7 +37,8 @@ use local_integrationhub\service\retry_policy;
  * @copyright  2026 Integration Hub Contributors
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class gateway {
+class gateway
+{
 
     /** @var gateway|null Singleton instance. */
     private static $instance = null;
@@ -50,7 +51,8 @@ class gateway {
      *
      * @return self
      */
-    public static function instance(): self {
+    public static function instance(): self
+    {
         if (self::$instance === null) {
             self::$instance = new self();
         }
@@ -68,7 +70,8 @@ class gateway {
      * @throws \moodle_exception  If the service is not found or circuit is open.
      */
     public function request(string $servicename, string $endpoint = '/', array $payload = [],
-                            string $method = ''): gateway_response {
+        string $method = ''): gateway_response
+    {
 
         // 1. Resolve the service from the registry.
         $service = service_registry::get_service($servicename);
@@ -102,9 +105,7 @@ class gateway {
         $attempts = 0;
 
         try {
-            $result = $retrypolicy->execute(function ($attempt) use (
-                $transport, $service, $endpoint, $payload, $method
-            ) {
+            $result = $retrypolicy->execute(function ($attempt) use ($transport, $service, $endpoint, $payload, $method) {
                 return $transport->execute($service, $endpoint, $payload, $method);
             });
 
@@ -117,11 +118,13 @@ class gateway {
 
             if ($success) {
                 $cb->record_success();
-            } else {
+            }
+            else {
                 $cb->record_failure();
             }
 
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             $cb->record_failure();
             $error = $e->getMessage();
             $success = false;
@@ -140,10 +143,13 @@ class gateway {
      * @param string $type The service type ('rest', 'amqp').
      * @return \local_integrationhub\transport\contract
      */
-    private function get_transport_driver(string $type): \local_integrationhub\transport\contract {
+    private function get_transport_driver(string $type): \local_integrationhub\transport\contract
+    {
         switch ($type) {
             case 'amqp':
                 return new \local_integrationhub\transport\amqp();
+            case 'soap':
+                return new \local_integrationhub\transport\soap();
             case 'rest':
             default:
                 return new \local_integrationhub\transport\http();
@@ -163,21 +169,22 @@ class gateway {
      * @param string|null $error    Error message if any.
      */
     private function log_request(int $serviceid, string $endpoint, string $method,
-                                  ?int $httpstatus, int $latencyms, int $attempts,
-                                  bool $success, ?string $error): void {
+        ?int $httpstatus, int $latencyms, int $attempts,
+        bool $success, ?string $error): void
+    {
         global $DB;
 
         $log = new \stdClass();
-        $log->serviceid     = $serviceid;
-        $log->endpoint      = $endpoint;
-        $log->http_method   = strtoupper($method);
-        $log->http_status   = $httpstatus;
-        $log->latency_ms    = $latencyms;
+        $log->serviceid = $serviceid;
+        $log->endpoint = $endpoint;
+        $log->http_method = strtoupper($method);
+        $log->http_status = $httpstatus;
+        $log->latency_ms = $latencyms;
         $log->attempt_count = $attempts;
-        $log->success       = $success ? 1 : 0;
+        $log->success = $success ? 1 : 0;
         $log->error_message = $error;
-        $log->direction     = 'outbound';
-        $log->timecreated   = time();
+        $log->direction = 'outbound';
+        $log->timecreated = time();
 
         try {
             $DB->insert_record(self::LOG_TABLE, $log);
@@ -194,13 +201,14 @@ class gateway {
                     "SELECT timecreated FROM {" . self::LOG_TABLE . "}
                      ORDER BY timecreated DESC
                      LIMIT 1 OFFSET ?",
-                    [$maxlogs - 1]
+                [$maxlogs - 1]
                 );
                 if ($cutoff) {
                     $DB->delete_records_select(self::LOG_TABLE, 'timecreated < ?', [$cutoff]);
                 }
             }
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             // Don't let logging failures break the request flow.
             debugging('Integration Hub: Failed to log request: ' . $e->getMessage(), DEBUG_DEVELOPER);
         }
@@ -209,6 +217,7 @@ class gateway {
     /**
      * Private constructor — use instance() instead.
      */
-    private function __construct() {
+    private function __construct()
+    {
     }
 }

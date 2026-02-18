@@ -3,6 +3,8 @@ namespace local_integrationhub\transport;
 
 defined('MOODLE_INTERNAL') || die();
 
+require_once(__DIR__ . '/../../vendor/autoload.php');
+
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
@@ -13,54 +15,76 @@ use PhpAmqpLib\Message\AMQPMessage;
  * Expects 'base_url' to be a connection string (e.g. amqp://user:pass@host:5672).
  * Expects 'endpoint' to be the Routing Key or Queue name.
  */
-class amqp implements contract {
+class amqp implements contract
+{
+    use transport_utils;
 
     /**
      * @inheritDoc
      */
-    public function execute(\stdClass $service, string $endpoint, array $payload, string $method = ''): array {
+    public function execute(\stdClass $service, string $endpoint, array $payload, string $method = ''): array
+    {
         $starttime = microtime(true);
         $attempts = 1;
 
         try {
+            // Parse configuration from URL query params
+            $parsed_url = parse_url($service->base_url);
+            $query = [];
+            if (isset($parsed_url['query'])) {
+                parse_str($parsed_url['query'], $query);
+            }
+
+            // Connection Logic
             $connection = amqp_helper::create_connection($service->base_url, (int)$service->timeout);
             $channel = $connection->channel();
-            $routingkey = ltrim($endpoint, '/'); 
-            amqp_helper::ensure_queue($channel, $routingkey);
+
+            // Determine Exchange and Routing Key
+            $exchange = $query['exchange'] ?? '';
+
+            // Routing Key: Rule/Endpoint overrides Config Default
+            $routingkey = ltrim($endpoint, '/');
+            if (empty($routingkey) && !empty($query['routing_key'])) {
+                $routingkey = $query['routing_key'];
+            }
+
+            // Queue Declaration (Optional side-effect)
+            // Only declare if 'queue_declare' param IS SET.
+            if (!empty($query['queue_declare'])) {
+                amqp_helper::ensure_queue($channel, $query['queue_declare']);
+            }
+
+            // Fallback: If no Exchange and no Routing Key are specified, but we declared a queue,
+            // assume we want to publish to that queue (Direct Queue Pattern).
+            if (empty($exchange) && empty($routingkey) && !empty($query['queue_declare'])) {
+                $routingkey = $query['queue_declare'];
+            }
+
+            // Implicit "Direct to Queue" fallback:
+            // If Exchange is empty AND we have a Routing Key, RabbitMQ treats it as "Send to Queue named X".
+            // In this specific case, if the user didn't ask to declare explicitly, 
+            // should we do it anyway to ensure delivery? 
+            // The user wants control. If they didn't put it in "Queue to Declare", we don't declare.
+            // BUT: Old behavior was "ensure_queue($routingkey)".
+            // Let's Respect the new field strictly: Only declare if 'queue_declare' is present.
+
             $msgbody = json_encode($payload);
             $msg = new AMQPMessage($msgbody, [
                 'delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT,
                 'content_type' => 'application/json'
             ]);
 
-            $exchange = ''; 
-            
             $channel->basic_publish($msg, $exchange, $routingkey);
 
-            // 3. Close.
             $channel->close();
             $connection->close();
 
-            return [
-                'success'   => true,
-                'response'  => 'Published to ' . $routingkey,
-                'error'     => null,
-                'latency'   => (int)((microtime(true) - $starttime) * 1000),
-                'attempts'  => $attempts
-            ];
+            $target = empty($exchange) ? "DefEx -> RK:{$routingkey}" : "Ex:{$exchange} -> RK:{$routingkey}";
+            return $this->success_result("Published to {$target}", $starttime, $attempts, 0);
 
-        } catch (\Exception $e) {
-            return $this->error_result('AMQP Error: ' . $e->getMessage(), $starttime);
         }
-    }
-
-    private function error_result(string $msg, float $starttime): array {
-        return [
-            'success'   => false,
-            'response'  => null,
-            'error'     => $msg,
-            'latency'   => (int)((microtime(true) - $starttime) * 1000),
-            'attempts'  => 1
-        ];
+        catch (\Exception $e) {
+            return $this->error_result('AMQP Error: ' . $e->getMessage(), $starttime, $attempts);
+        }
     }
 }

@@ -25,10 +25,11 @@ defined('MOODLE_INTERNAL') || die();
  * the local_integrationhub_svc table.
  *
  * @package    local_integrationhub
- * @copyright  2026 Integration Hub Contributors
+ * @copyright  Mr Jacket - Felix Manrique
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class registry {
+class registry
+{
 
     /** @var string Table name for services. */
     const TABLE = 'local_integrationhub_svc';
@@ -39,7 +40,8 @@ class registry {
      * @param string $name The service name.
      * @return \stdClass|false The service record, or false if not found.
      */
-    public static function get_service(string $name) {
+    public static function get_service(string $name)
+    {
         global $DB;
         return $DB->get_record(self::TABLE, ['name' => $name]);
     }
@@ -51,7 +53,8 @@ class registry {
      * @return \stdClass The service record.
      * @throws \dml_exception If not found.
      */
-    public static function get_service_by_id(int $id): \stdClass {
+    public static function get_service_by_id(int $id): \stdClass
+    {
         global $DB;
         return $DB->get_record(self::TABLE, ['id' => $id], '*', MUST_EXIST);
     }
@@ -61,7 +64,8 @@ class registry {
      *
      * @return \stdClass[] Array of service records.
      */
-    public static function get_all_services(): array {
+    public static function get_all_services(): array
+    {
         global $DB;
         return $DB->get_records(self::TABLE, null, 'name ASC');
     }
@@ -74,35 +78,34 @@ class registry {
      * @return int The new service ID.
      * @throws \dml_exception
      */
-    public static function create_service(\stdClass $data): int {
+    public static function create_service(\stdClass $data): int
+    {
         global $DB;
 
         $now = time();
         $record = new \stdClass();
-        $record->name                = clean_param($data->name, PARAM_TEXT);
-        $record->type                = clean_param($data->type ?? 'rest', PARAM_ALPHA);
-        $record->base_url            = clean_param($data->base_url, PARAM_URL);
-        $record->auth_type           = clean_param($data->auth_type ?? 'bearer', PARAM_ALPHA);
-        $record->auth_token          = $data->auth_token ?? '';
-        $record->timeout             = (int)($data->timeout ?? 5);
-        $record->max_retries         = (int)($data->max_retries ?? 3);
-        $record->retry_backoff       = (int)($data->retry_backoff ?? 1);
+        $record->name = clean_param($data->name, PARAM_TEXT);
+        $record->type = clean_param($data->type ?? 'rest', PARAM_ALPHA);
+        $record->base_url = clean_param($data->base_url, PARAM_RAW_TRIMMED); // Allow amqp:// schemes
+        $record->auth_type = clean_param($data->auth_type ?? 'bearer', PARAM_ALPHA);
+        $record->auth_token = $data->auth_token ?? '';
+        $record->timeout = (int)($data->timeout ?? 5);
+        $record->max_retries = (int)($data->max_retries ?? 3);
+        $record->retry_backoff = (int)($data->retry_backoff ?? 1);
         $record->cb_failure_threshold = (int)($data->cb_failure_threshold ?? 5);
-        $record->cb_cooldown         = (int)($data->cb_cooldown ?? 30);
-        $record->response_queue      = clean_param($data->response_queue ?? '', PARAM_ALPHANUMEXT);
-        $record->enabled             = 1;
-        $record->timecreated         = $now;
-        $record->timemodified        = $now;
+        $record->cb_cooldown = (int)($data->cb_cooldown ?? 30);
+        $record->response_queue = clean_param($data->response_queue ?? '', PARAM_ALPHANUMEXT);
+        $record->enabled = 1;
+        $record->timecreated = $now;
+        $record->timemodified = $now;
 
         $id = $DB->insert_record(self::TABLE, $record);
-
-        // Initialize circuit breaker state for this service.
         $cb = new \stdClass();
-        $cb->serviceid     = $id;
-        $cb->state         = 'closed';
+        $cb->serviceid = $id;
+        $cb->state = 'closed';
         $cb->failure_count = 0;
-        $cb->last_failure  = null;
-        $cb->timemodified  = $now;
+        $cb->last_failure = null;
+        $cb->timemodified = $now;
         $DB->insert_record('local_integrationhub_cb', $cb);
 
         return $id;
@@ -116,7 +119,8 @@ class registry {
      * @return bool True on success.
      * @throws \dml_exception
      */
-    public static function update_service(int $id, \stdClass $data): bool {
+    public static function update_service(int $id, \stdClass $data): bool
+    {
         global $DB;
 
         $record = self::get_service_by_id($id);
@@ -128,7 +132,7 @@ class registry {
             $record->type = clean_param($data->type, PARAM_ALPHA);
         }
         if (isset($data->base_url)) {
-            $record->base_url = clean_param($data->base_url, PARAM_URL);
+            $record->base_url = clean_param($data->base_url, PARAM_RAW_TRIMMED);
         }
         if (isset($data->auth_type)) {
             $record->auth_type = clean_param($data->auth_type, PARAM_ALPHA);
@@ -169,15 +173,14 @@ class registry {
      * @param int $id The service ID.
      * @return bool True on success.
      */
-    public static function delete_service(int $id): bool {
+    public static function delete_service(int $id): bool
+    {
         global $DB;
-
-        // Clean up all dependencies.
         $DB->delete_records('local_integrationhub_cb', ['serviceid' => $id]);
         $DB->delete_records('local_integrationhub_log', ['serviceid' => $id]);
         $DB->delete_records('local_integrationhub_rules', ['serviceid' => $id]);
         $DB->delete_records('local_integrationhub_dlq', ['serviceid' => $id]);
-        
+
         return $DB->delete_records(self::TABLE, ['id' => $id]);
     }
 }

@@ -22,10 +22,11 @@ defined('MOODLE_INTERNAL') || die();
  * Registry for managing event rules.
  *
  * @package    local_integrationhub
- * @copyright  2026 Integration Hub Contributors
+ * @copyright  Mr Jacket - Felix Manrique
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class registry {
+class registry
+{
 
     /** @var string Table name. */
     const TABLE = 'local_integrationhub_rules';
@@ -37,7 +38,8 @@ class registry {
      * @return \stdClass
      * @throws \moodle_exception
      */
-    public static function get_rule(int $id): \stdClass {
+    public static function get_rule(int $id): \stdClass
+    {
         global $DB;
         $rule = $DB->get_record(self::TABLE, ['id' => $id], '*', MUST_EXIST);
         return $rule;
@@ -48,7 +50,8 @@ class registry {
      *
      * @return array
      */
-    public static function get_all_rules(): array {
+    public static function get_all_rules(): array
+    {
         global $DB;
         return $DB->get_records(self::TABLE, null, 'eventname ASC');
     }
@@ -59,17 +62,19 @@ class registry {
      * @param \stdClass $data Rule data.
      * @return int New rule ID.
      */
-    public static function create_rule(\stdClass $data): int {
+    public static function create_rule(\stdClass $data): int
+    {
         global $DB;
 
         $rule = new \stdClass();
-        $rule->eventname        = trim($data->eventname);
-        $rule->serviceid        = (int)$data->serviceid;
-        $rule->endpoint         = isset($data->endpoint) ? trim($data->endpoint) : null;
+        $rule->eventname = trim($data->eventname);
+        $rule->serviceid = (int)$data->serviceid;
+        $rule->endpoint = isset($data->endpoint) ? trim($data->endpoint) : null;
+        $rule->http_method = isset($data->http_method) ? strtoupper(trim($data->http_method)) : 'POST';
         $rule->payload_template = isset($data->payload_template) ? trim($data->payload_template) : null;
-        $rule->enabled          = isset($data->enabled) ? (int)$data->enabled : 1;
-        $rule->timecreated      = time();
-        $rule->timemodified     = time();
+        $rule->enabled = isset($data->enabled) ? (int)$data->enabled : 1;
+        $rule->timecreated = time();
+        $rule->timemodified = time();
 
         return $DB->insert_record(self::TABLE, $rule);
     }
@@ -80,11 +85,12 @@ class registry {
      * @param int $id Rule ID.
      * @param \stdClass $data New data.
      */
-    public static function update_rule(int $id, \stdClass $data): void {
+    public static function update_rule(int $id, \stdClass $data): void
+    {
         global $DB;
 
         $rule = self::get_rule($id);
-        
+
         if (isset($data->eventname)) {
             $rule->eventname = trim($data->eventname);
         }
@@ -93,6 +99,9 @@ class registry {
         }
         if (isset($data->endpoint)) {
             $rule->endpoint = trim($data->endpoint);
+        }
+        if (isset($data->http_method)) {
+            $rule->http_method = strtoupper(trim($data->http_method));
         }
         if (isset($data->payload_template)) {
             $rule->payload_template = trim($data->payload_template);
@@ -110,7 +119,8 @@ class registry {
      *
      * @param int $id Rule ID.
      */
-    public static function delete_rule(int $id): void {
+    public static function delete_rule(int $id): void
+    {
         global $DB;
         $DB->delete_records(self::TABLE, ['id' => $id]);
     }
@@ -121,28 +131,24 @@ class registry {
      * @param string $classname
      * @return string
      */
-    public static function get_event_display_name(string $classname): string {
-        // If class exists, try to use Moodle's get_name().
+    public static function get_event_display_name(string $classname): string
+    {
         $classname = ltrim($classname, '\\');
         if (class_exists("\\{$classname}")) {
             try {
                 $fullclass = "\\{$classname}";
-                if (is_a($fullclass, \core\event\base::class, true)) {
+                if (is_a($fullclass, \core\event\base::class , true)) {
                     return $fullclass::get_name();
                 }
-            } catch (\Exception $e) {
-                // Fallback to prettifier.
+            }
+            catch (\Exception $e) {
             }
         }
-
-        // Prettify fallback: \core\event\user_loggedinas -> User Logged In As
         $parts = explode('\\', $classname);
         $last = end($parts);
-        
-        // Convert snake_case or StudlyCase to Title Case.
         $pretty = str_replace('_', ' ', $last);
         $pretty = preg_replace('/([a-z])([A-Z])/', '$1 $2', $pretty);
-        
+
         return ucwords($pretty);
     }
 
@@ -151,12 +157,13 @@ class registry {
      * 
      * @return array [classname => Display Name]
      */
-    public static function get_all_events_dynamic(): array {
+    public static function get_all_events_dynamic(): array
+    {
         $events = \core_component::get_component_classes_in_namespace(null, 'event');
         $list = [];
 
         foreach (array_keys($events) as $event) {
-            if (is_a($event, \core\event\base::class, true)) {
+            if (is_a($event, \core\event\base::class , true)) {
                 $reflection = new \ReflectionClass($event);
                 if (!$reflection->isAbstract()) {
                     $list["\\{$event}"] = self::get_event_display_name($event);
@@ -173,7 +180,8 @@ class registry {
      * 
      * @return array [classname => Display Name]
      */
-    public static function get_common_events(): array {
+    public static function get_common_events(): array
+    {
         $common = [
             '\core\event\user_created',
             '\core\event\user_loggedin',
@@ -184,7 +192,6 @@ class registry {
 
         $list = [];
         foreach ($common as $classname) {
-            // Internal call to resolve name but avoiding the common list again.
             $list[$classname] = self::get_event_display_name($classname);
         }
         return $list;

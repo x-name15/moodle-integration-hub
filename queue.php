@@ -45,7 +45,8 @@ if ($canmanage && !empty($action) && confirm_sesskey()) {
     if ($action === 'retry' && $taskid > 0) {
         if (\local_integrationhub\task\queue_manager::retry_task($taskid)) {
             \core\notification::success(get_string('task_retried', 'local_integrationhub'));
-        } else {
+        }
+        else {
             \core\notification::error(get_string('task_retry_failed', 'local_integrationhub'));
         }
         redirect($PAGE->url);
@@ -54,7 +55,8 @@ if ($canmanage && !empty($action) && confirm_sesskey()) {
     if ($action === 'deletetask' && $taskid > 0) {
         if (\local_integrationhub\task\queue_manager::delete_task($taskid)) {
             \core\notification::success(get_string('task_deleted', 'local_integrationhub'));
-        } else {
+        }
+        else {
             \core\notification::error(get_string('task_delete_failed', 'local_integrationhub'));
         }
         redirect($PAGE->url);
@@ -74,13 +76,14 @@ if ($canmanage && !empty($action) && confirm_sesskey()) {
             if ($rule) {
                 $task = new \local_integrationhub\task\dispatch_event_task();
                 $task->set_custom_data([
-                    'ruleid'    => $rule->id,
+                    'ruleid' => $rule->id,
                     'eventdata' => json_decode($dlqitem->payload, true)
                 ]);
                 \core\task\manager::queue_adhoc_task($task);
                 $DB->delete_records('local_integrationhub_dlq', ['id' => $dlqid]);
                 \core\notification::success(get_string('dlq_replayed', 'local_integrationhub'));
-            } else {
+            }
+            else {
                 \core\notification::error('Rule not found for this event.');
             }
         }
@@ -113,6 +116,9 @@ echo html_writer::end_tag('li');
 echo html_writer::start_tag('li', ['class' => 'nav-item']);
 echo html_writer::link(new moodle_url('/local/integrationhub/queue.php'), get_string('queue', 'local_integrationhub'), ['class' => 'nav-link active']);
 echo html_writer::end_tag('li');
+echo html_writer::start_tag('li', ['class' => 'nav-item']);
+echo html_writer::link(new moodle_url('/local/integrationhub/events.php'), get_string('sent_events', 'local_integrationhub'), ['class' => 'nav-link']);
+echo html_writer::end_tag('li');
 echo html_writer::end_tag('ul');
 echo html_writer::end_div();
 
@@ -138,13 +144,13 @@ if ($canmanage && $hasorphans) {
     echo html_writer::start_tag('form', [
         'method' => 'post',
         'action' => $PAGE->url->out_omit_querystring(),
-        'style'  => 'display: inline;',
+        'style' => 'display: inline;',
     ]);
     echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'action', 'value' => 'purgeorphans']);
     echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
     echo html_writer::tag('button', '<i class="fa fa-broom"></i> ' . get_string('purge_orphans', 'local_integrationhub'), [
-        'type'    => 'submit',
-        'class'   => 'btn btn-warning btn-sm',
+        'type' => 'submit',
+        'class' => 'btn btn-warning btn-sm',
         'onclick' => "return confirm('" . addslashes_js(get_string('purge_orphans_confirm', 'local_integrationhub')) . "');",
     ]);
     echo html_writer::end_tag('form');
@@ -153,7 +159,8 @@ if ($canmanage && $hasorphans) {
 
 if (empty($tasks)) {
     echo html_writer::div(get_string('no_pending_tasks', 'local_integrationhub'), 'alert alert-success');
-} else {
+}
+else {
     echo html_writer::start_tag('div', ['class' => 'table-responsive mb-5']);
     // Force text-dark to avoid theme white-text issues
     echo html_writer::start_tag('table', ['class' => 'table table-striped table-hover', 'style' => 'color: #212529 !important;']);
@@ -171,21 +178,21 @@ if (empty($tasks)) {
 
     foreach ($tasks as $task) {
         echo '<tr>';
-        
+
         // Event Name.
         echo html_writer::tag('td', s($task->eventname));
-        
+
         // Service Name.
         echo html_writer::tag('td', s($task->servicename));
-        
+
         // Failures badge.
         $failclass = $task->faildelay > 0 ? 'badge bg-danger' : 'badge bg-secondary';
         echo html_writer::tag('td', html_writer::tag('span', $task->faildelay > 0 ? get_string('failed', 'local_integrationhub') : get_string('pending', 'local_integrationhub'), ['class' => $failclass]));
-        
+
         // Next Run.
         $nextrun = $task->nextruntime;
         $timestr = userdate($nextrun);
-        
+
         if ($task->nextruntime < time()) {
             $timestr .= ' <span class="badge bg-warning text-dark">Overdue</span>';
         }
@@ -197,27 +204,41 @@ if (empty($tasks)) {
         // Actions.
         if ($canmanage) {
             echo '<td>';
+
+            // View Payload Button (Pending/Failed Tasks).
+            // We extract eventdata from customdata.
+            $cdata = json_decode($task->customdata);
+            $payload_view = isset($cdata->eventdata) ? json_encode($cdata->eventdata, JSON_PRETTY_PRINT) : '{}';
+
+            echo html_writer::tag('button', '<i class="fa fa-code"></i>', [
+                'class' => 'btn btn-sm btn-info me-1 ih-view-payload',
+                'type' => 'button',
+                'title' => get_string('view_payload', 'local_integrationhub'),
+                'data-payload' => s($payload_view), // s() escapes HTML entities safely
+                'data-title' => get_string('payload_source', 'local_integrationhub') . ': ' . s($task->eventname)
+            ]);
+
             if ($task->faildelay > 0 || $task->nextruntime < time()) {
                 // Retry button.
                 $retryurl = new moodle_url($PAGE->url, [
-                    'action'  => 'retry', 
-                    'taskid'  => $task->id, 
+                    'action' => 'retry',
+                    'taskid' => $task->id,
                     'sesskey' => sesskey()
                 ]);
-                echo html_writer::link($retryurl, '<i class="fa fa-refresh"></i> ' . get_string('retry', 'local_integrationhub'), [
+                echo html_writer::link($retryurl, '<i class="fa fa-refresh"></i>', [
                     'class' => 'btn btn-sm btn-primary me-1',
                     'title' => get_string('retry', 'local_integrationhub')
                 ]);
             }
             // Delete button (always visible).
             $deleteurl = new moodle_url($PAGE->url, [
-                'action'  => 'deletetask',
-                'taskid'  => $task->id,
+                'action' => 'deletetask',
+                'taskid' => $task->id,
                 'sesskey' => sesskey()
             ]);
             echo html_writer::link($deleteurl, '<i class="fa fa-trash"></i>', [
-                'class'   => 'btn btn-sm btn-outline-danger',
-                'title'   => get_string('delete'),
+                'class' => 'btn btn-sm btn-outline-danger',
+                'title' => get_string('delete'),
                 'onclick' => "return confirm('" . addslashes_js(get_string('task_delete_confirm', 'local_integrationhub')) . "');",
             ]);
             echo '</td>';
@@ -235,7 +256,8 @@ echo html_writer::tag('p', get_string('dlq_desc', 'local_integrationhub'), ['cla
 
 if (empty($dlqitems)) {
     echo html_writer::div(get_string('no_dlq_items', 'local_integrationhub'), 'alert alert-info');
-} else {
+}
+else {
     echo html_writer::start_tag('div', ['class' => 'table-responsive']);
     echo html_writer::start_tag('table', ['class' => 'table table-striped table-hover', 'style' => 'color: #212529 !important;']);
     echo '<thead class="table-dark"><tr>';
@@ -256,12 +278,28 @@ if (empty($dlqitems)) {
 
         if ($canmanage) {
             echo '<td>';
+
+            // View Payload Button (DLQ).
+            $payload_view = $item->payload ? json_encode(json_decode($item->payload), JSON_PRETTY_PRINT) : '{}'; // Re-encode for pretty print
+
+            echo html_writer::tag('button', '<i class="fa fa-code"></i>', [
+                'class' => 'btn btn-sm btn-info me-1 ih-view-payload',
+                'type' => 'button',
+                'title' => get_string('view_payload', 'local_integrationhub'),
+                'data-payload' => s($payload_view),
+                'data-title' => get_string('payload_final', 'local_integrationhub') . ': ' . s($item->eventname)
+            ]);
+
             $replayurl = new moodle_url($PAGE->url, ['action' => 'replay_dlq', 'dlqid' => $item->id, 'sesskey' => sesskey()]);
-            echo html_writer::link($replayurl, '<i class="fa fa-play"></i> ' . get_string('replay', 'local_integrationhub'), ['class' => 'btn btn-sm btn-outline-success me-1']);
+            echo html_writer::link($replayurl, '<i class="fa fa-play"></i>', [
+                'class' => 'btn btn-sm btn-outline-success me-1',
+                'title' => get_string('replay', 'local_integrationhub')
+            ]);
 
             $deleteurl = new moodle_url($PAGE->url, ['action' => 'delete_dlq', 'dlqid' => $item->id, 'sesskey' => sesskey()]);
             echo html_writer::link($deleteurl, '<i class="fa fa-trash"></i>', [
                 'class' => 'btn btn-sm btn-outline-danger',
+                'title' => get_string('delete'),
                 'onclick' => "return confirm('" . addslashes_js(get_string('dlq_delete_confirm', 'local_integrationhub')) . "');"
             ]);
             echo '</td>';
@@ -270,5 +308,9 @@ if (empty($dlqitems)) {
     }
     echo '</tbody></table></div>';
 }
+
+// ---- MODAL FOR PAYLOAD (Via Moodle Core API) ----
+// We use the AMD module local_integrationhub/queue
+$PAGE->requires->js_call_amd('local_integrationhub/queue', 'init');
 
 echo $OUTPUT->footer();

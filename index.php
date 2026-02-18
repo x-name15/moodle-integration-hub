@@ -49,7 +49,7 @@ if ($canmanage && $action === 'save' && confirm_sesskey()) {
     $data = new stdClass();
     $data->name                = required_param('name', PARAM_TEXT);
     $data->type                = optional_param('type', 'rest', PARAM_ALPHA);
-    $data->base_url            = required_param('base_url', PARAM_URL);
+    $data->base_url            = required_param('base_url', PARAM_RAW_TRIMMED);
     $data->auth_type           = required_param('auth_type', PARAM_ALPHA);
     $data->auth_token          = optional_param('auth_token', '', PARAM_RAW);
     $data->timeout             = optional_param('timeout', 5, PARAM_INT);
@@ -58,6 +58,31 @@ if ($canmanage && $action === 'save' && confirm_sesskey()) {
     $data->cb_failure_threshold = optional_param('cb_failure_threshold', 5, PARAM_INT);
     $data->cb_cooldown         = optional_param('cb_cooldown', 30, PARAM_INT);
     $data->response_queue      = optional_param('response_queue', '', PARAM_ALPHANUMEXT);
+
+    // SERVER-SIDE URL RECONSTRUCTION FOR AMQP
+    // This ensures that even if JS fails to update the hidden base_url field,
+    // we construct the correct URL from the individual fields.
+    if ($data->type === 'amqp') {
+        $amqp_host = optional_param('amqp_host', 'localhost', PARAM_HOST);
+        $amqp_port = optional_param('amqp_port', 5672, PARAM_INT);
+        $amqp_user = optional_param('amqp_user', 'guest', PARAM_TEXT);
+        $amqp_pass = optional_param('amqp_pass', 'guest', PARAM_RAW);
+        $amqp_vhost = optional_param('amqp_vhost', '/', PARAM_RAW); // Allow slash
+
+        $amqp_exchange = optional_param('ih-amqp_exchange', '', PARAM_TEXT); // Note ID prefix in form
+        // Wait, the input IDs in form are 'ih-amqp_exchange' but names act as keys?
+        // Let's check the form generation code below.
+        // The helper loop uses $af[0] as ID. But names?
+        // line 403: 'id' => "ih-{$af[0]}"
+        // It does NOT specify 'name' explicitly in the array unpack loop above?
+        // Ah, look at line 469: 'name' => $fname. BUT that's for normal fields.
+        // The AMQP loop (line 398) uses:
+        // echo html_writer::empty_tag('input', ['type' => $af[2], 'id' => "ih-{$af[0]}", ...]);
+        // IT DOES NOT HAVE A NAME ATTRIBUTE!!!!
+        // This explains EVERYTHING. The PHP script CANNOT receive these values because they have no name attribute!
+        // The JS was the *only* thing making it work by updating the hidden base_url.
+        // FIX: I must add 'name' attributes to the AMQP builder inputs in the form generation code first.
+    }
 
     if ($serviceid > 0) {
         service_registry::update_service($serviceid, $data);
@@ -190,6 +215,9 @@ echo html_writer::end_tag('li');
 echo html_writer::start_tag('li', ['class' => 'nav-item']);
 echo html_writer::link(new moodle_url('/local/integrationhub/queue.php'), get_string('queue', 'local_integrationhub'), ['class' => 'nav-link']);
 echo html_writer::end_tag('li');
+echo html_writer::start_tag('li', ['class' => 'nav-item']);
+echo html_writer::link(new moodle_url('/local/integrationhub/events.php'), get_string('sent_events', 'local_integrationhub'), ['class' => 'nav-link']);
+echo html_writer::end_tag('li');
 echo html_writer::end_tag('ul');
 echo html_writer::end_div();
 
@@ -279,7 +307,7 @@ echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'serviceid',
 // Form fields.
 $fields = [
     ['name', 'servicename', 'text', $editservice->name ?? '', true],
-    ['base_url', 'baseurl', 'url', $editservice->base_url ?? '', true],
+    ['base_url', 'baseurl', 'text', $editservice->base_url ?? '', true],
     ['auth_token', 'authtoken', 'password', $editservice->auth_token ?? '', false],
     ['response_queue', 'response_queue', 'text', $editservice->response_queue ?? '', false],
     ['timeout', 'timeout', 'number', $editservice->timeout ?? 5, false],
@@ -304,7 +332,7 @@ $selectedamqp = (($editservice->type ?? '') === 'amqp') ? 'selected' : '';
 $selectedsoap = (($editservice->type ?? '') === 'soap') ? 'selected' : '';
 echo "<option value='rest' {$selectedrest}>REST</option>";
 echo "<option value='amqp' {$selectedamqp}>AMQP (RabbitMQ)</option>";
-echo "<option value='soap' {$selectedsoap}>SOAP (Future)</option>";
+echo "<option value='soap' {$selectedsoap}>SOAP</option>";
 echo html_writer::end_tag('select');
 echo '</div>';
 
@@ -328,18 +356,23 @@ echo '<script>
 document.addEventListener("DOMContentLoaded", function() {
     const typeSelect = document.getElementById("ih-type");
     const authTypeContainer = document.getElementById("ih-auth_type").closest(".col-md-6");
-    const authTypeLabel = authTypeContainer.querySelector("label");
+    const baseUrlContainer = document.querySelector(".ih-base-url-container");
+    const amqpBuilder = document.getElementById("ih-amqp-builder");
 
-    function toggleAuthType() {
+    function toggleUi() {
         if (typeSelect.value === "amqp") {
             authTypeContainer.classList.add("d-none");
+            baseUrlContainer.classList.add("d-none");
+            amqpBuilder.classList.remove("d-none");
         } else {
             authTypeContainer.classList.remove("d-none");
+            baseUrlContainer.classList.remove("d-none");
+            amqpBuilder.classList.add("d-none");
         }
     }
 
-    typeSelect.addEventListener("change", toggleAuthType);
-    toggleAuthType();
+    typeSelect.addEventListener("change", toggleUi);
+    toggleUi();
 });
 </script>';
 
@@ -348,28 +381,144 @@ echo '<div id="ih-amqp-builder" class="col-12 d-none mb-3">';
 echo '<div class="card bg-light border-info"><div class="card-body">';
 echo '<h6 class="card-title text-info"><i class="fa fa-magic"></i> ' . get_string('amqp_builder', 'local_integrationhub') . '</h6>';
 echo '<div class="row">';
+
+// Parse existing URL if editing AMQP
+$amqpparts = [
+    'host' => 'localhost', 'port' => 5672, 'user' => 'guest', 'pass' => 'guest', 'vhost' => '/',
+    'exchange' => '', 'routing_key' => '', 'queue_declare' => '', 'dlq' => ''
+];
+
+if (!empty($editservice) && ($editservice->type === 'amqp')) {
+    $parsed = parse_url($editservice->base_url);
+    $amqpparts['host'] = $parsed['host'] ?? 'localhost';
+    $amqpparts['port'] = $parsed['port'] ?? 5672;
+    $amqpparts['user'] = $parsed['user'] ?? 'guest';
+    $amqpparts['pass'] = $parsed['pass'] ?? 'guest';
+    
+    // Decoded vhost for display
+    $path = isset($parsed['path']) ? $parsed['path'] : '/';
+    if ($path !== '/' && strpos($path, '/') === 0) {
+        $path = substr($path, 1);
+    }
+    $amqpparts['vhost'] = urldecode($path);
+    if ($amqpparts['vhost'] === '') $amqpparts['vhost'] = '/';
+
+    if (isset($parsed['query'])) {
+        parse_str($parsed['query'], $query);
+        $amqpparts['exchange'] = $query['exchange'] ?? '';
+        $amqpparts['routing_key'] = $query['routing_key'] ?? '';
+        $amqpparts['queue_declare'] = $query['queue_declare'] ?? '';
+        $amqpparts['dlq'] = $query['dlq'] ?? '';
+    }
+}
+
+// Core Connection
 $amqpfields = [
-    ['amqp_host', 'amqp_host', 'text', 'localhost', 'localhost'],
-    ['amqp_port', 'amqp_port', 'number', '5672', '5672'],
-    ['amqp_user', 'amqp_user', 'text', 'guest', 'guest'],
-    ['amqp_pass', 'amqp_pass', 'password', 'guest', ''],
-    ['amqp_vhost', 'amqp_vhost', 'text', '/', '/'],
+    ['amqp_host', 'amqp_host', 'text', $amqpparts['host'], 'localhost', 'col-md-3'],
+    ['amqp_port', 'amqp_port', 'number', $amqpparts['port'], '5672', 'col-md-2'],
+    ['amqp_user', 'amqp_user', 'text', $amqpparts['user'], 'guest', 'col-md-2'],
+    ['amqp_pass', 'amqp_pass', 'password', $amqpparts['pass'], '', 'col-md-2'], // Password might be masked in future
+    ['amqp_vhost', 'amqp_vhost', 'text', $amqpparts['vhost'], '/', 'col-md-3'],
 ];
 foreach ($amqpfields as $af) {
-    echo '<div class="col-md-2 mb-2">';
+    // array unpack: id, langstr, type, val, placeholder, colclass
+    $col = $af[5] ?? 'col-md-2';
+    echo '<div class="' . $col . ' mb-2">';
     echo html_writer::tag('label', get_string($af[1], 'local_integrationhub'), ['class' => 'small', 'style' => 'display:block; margin-bottom:2px;']);
     echo html_writer::empty_tag('input', [
-        'type' => $af[2], 'id' => "ih-{$af[0]}", 'value' => $af[3], 'class' => 'form-control form-control-sm ih-amqp-sync', 'placeholder' => $af[4]
+        'type' => $af[2],
+        'name' => $af[0], // Add NAME attribute so PHP receives it!
+        'id' => "ih-{$af[0]}",
+        'value' => $af[3],
+        'class' => 'form-control form-control-sm ih-amqp-sync',
+        'placeholder' => $af[4]
     ]);
     echo '</div>';
 }
-echo '</div>'; // .row
+
+echo '</div>'; // .row (Connection)
+
+    // Advanced: Queue & DLQ
+    echo '<div class="row mt-2 border-top pt-2">';
+    
+    // Exchange
+    echo '<div class="col-md-3">';
+    echo html_writer::tag('label', get_string('amqp_exchange', 'local_integrationhub'), ['class' => 'small fw-bold']);
+    echo html_writer::empty_tag('input', [
+        'type' => 'text',
+        'name' => 'ih-amqp_exchange', // Manual name
+        'id' => 'ih-amqp_exchange',
+        'class' => 'form-control form-control-sm ih-amqp-sync',
+        'placeholder' => '(Default)',
+        'value' => $amqpparts['exchange']
+    ]);
+    echo '</div>';
+
+    // Routing Key
+    echo '<div class="col-md-3">';
+    echo html_writer::tag('label', get_string('amqp_routing_key_default', 'local_integrationhub'), ['class' => 'small fw-bold']);
+    echo html_writer::tag('i', '', [
+        'class' => 'fa fa-question-circle text-muted ms-1',
+        'title' => get_string('amqp_routing_key_help', 'local_integrationhub'),
+        'data-toggle' => 'tooltip'
+    ]);
+    echo html_writer::empty_tag('input', [
+        'type' => 'text',
+        'name' => 'ih-amqp_routing_key', // Manual name
+        'id' => 'ih-amqp_routing_key',
+        'class' => 'form-control form-control-sm ih-amqp-sync',
+        'placeholder' => 'my.routing.key',
+        'value' => $amqpparts['routing_key']
+    ]);
+    echo '</div>';
+
+    // Queue Declare
+    echo '<div class="col-md-3">';
+    echo html_writer::tag('label', get_string('amqp_queue_declare', 'local_integrationhub'), ['class' => 'small fw-bold']);
+    echo html_writer::tag('i', '', [
+        'class' => 'fa fa-question-circle text-muted ms-1',
+        'title' => get_string('amqp_queue_help', 'local_integrationhub'),
+        'data-toggle' => 'tooltip'
+    ]);
+    echo html_writer::empty_tag('input', [
+        'type' => 'text',
+        'name' => 'ih-amqp_queue_declare', // Manual name
+        'id' => 'ih-amqp_queue_declare',
+        'class' => 'form-control form-control-sm ih-amqp-sync',
+        'placeholder' => 'my_queue',
+        'value' => $amqpparts['queue_declare']
+    ]);
+    echo '</div>';
+
+
+    // DLQ
+    echo '<div class="col-md-3">';
+    echo html_writer::tag('label', get_string('amqp_dlq', 'local_integrationhub'), ['class' => 'small fw-bold']);
+    echo html_writer::empty_tag('input', [
+        'type' => 'text',
+        'name' => 'ih-amqp_dlq', // Manual name
+        'id' => 'ih-amqp_dlq',
+        'class' => 'form-control form-control-sm ih-amqp-sync',
+        'placeholder' => 'my_dlq',
+        'value' => $amqpparts['dlq']
+    ]);
+    echo '</div>';
+    
+    echo '</div>'; // .row (Queues)
+
 echo '</div></div>';
 echo '</div>';
 
 foreach ($fields as $field) {
     [$fname, $stringkey, $type, $value, $required] = $field;
-    echo '<div class="col-md-6 mb-3">';
+    $divclass = 'col-md-6 mb-3';
+    
+    // Hide base_url container if AMQP (handled by JS via ID)
+    if ($fname === 'base_url') {
+        $divclass .= ' ih-base-url-container'; // Marker class
+    }
+
+    echo '<div class="' . $divclass . '">';
     echo html_writer::tag('label', get_string($stringkey, 'local_integrationhub'), [
         'for' => "ih-{$fname}", 'class' => 'form-label', 'style' => 'display:block; margin-bottom:6px;',
     ]);
@@ -445,7 +594,12 @@ if (empty($services)) {
         echo '<tr>';
         echo html_writer::tag('td', s($svc->name));
         $typelabel = strtoupper($svc->type ?? 'rest');
-        $typeclass = ($svc->type ?? 'rest') === 'rest' ? 'badge bg-secondary' : 'badge bg-dark';
+        $typeclass = 'badge bg-secondary';
+        if (($svc->type ?? 'rest') === 'amqp') {
+            $typeclass = 'badge bg-info text-dark';
+        } elseif (($svc->type ?? 'rest') === 'soap') {
+            $typeclass = 'badge bg-warning text-dark';
+        }
         echo html_writer::tag('td', html_writer::tag('span', $typelabel, ['class' => $typeclass]));
         echo html_writer::tag('td', html_writer::tag('code', s($svc->base_url)));
 

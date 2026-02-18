@@ -30,16 +30,38 @@ require_capability('local/integrationhub:view', $context);
 
 // Filters.
 $serviceid = optional_param('serviceid', 0, PARAM_INT);
-$status    = optional_param('status', '', PARAM_ALPHA); // 'success' or 'failure'
-$page      = optional_param('page', 0, PARAM_INT);
-$perpage   = 25;
+$status = optional_param('status', '', PARAM_ALPHA); // 'success' or 'failure'
+$page = optional_param('page', 0, PARAM_INT);
+$perpage = 25;
 
-$action    = optional_param('action', '', PARAM_ALPHA);
+$action = optional_param('action', '', PARAM_ALPHA);
 
 if ($action === 'clearlogs' && has_capability('local/integrationhub:manage', $context)) {
     require_sesskey(); // Checks sesskey in POST/GET and throws exception if missing.
-    $DB->delete_records('local_integrationhub_log');
-    \core\notification::success(get_string('logs_cleared', 'local_integrationhub'));
+
+    // Build specific deletion criteria.
+    $conditions = [];
+    if ($serviceid > 0) {
+        $conditions['serviceid'] = $serviceid;
+    }
+    if ($status === 'success') {
+        $conditions['success'] = 1;
+    }
+    elseif ($status === 'failure') {
+        $conditions['success'] = 0;
+    }
+
+    if (!empty($conditions)) {
+        $DB->delete_records('local_integrationhub_log', $conditions);
+        // We use a generic message or constructing one based on filters would be overkill.
+        \core\notification::success(get_string('logs_cleared', 'local_integrationhub'));
+    }
+    else {
+        // No filters = Clear ALL.
+        $DB->delete_records('local_integrationhub_log');
+        \core\notification::success(get_string('logs_cleared', 'local_integrationhub'));
+    }
+
     redirect($PAGE->url);
 }
 
@@ -64,7 +86,8 @@ if ($serviceid > 0) {
 }
 if ($status === 'success') {
     $where[] = 'l.success = 1';
-} else if ($status === 'failure') {
+}
+else if ($status === 'failure') {
     $where[] = 'l.success = 0';
 }
 
@@ -96,7 +119,7 @@ echo html_writer::start_div('mb-3');
 echo html_writer::link(
     new moodle_url('/local/integrationhub/index.php'),
     '← ' . get_string('dashboard', 'local_integrationhub'),
-    ['class' => 'btn btn-outline-secondary btn-sm']
+['class' => 'btn btn-outline-secondary btn-sm']
 );
 echo html_writer::end_div();
 
@@ -104,14 +127,14 @@ echo html_writer::end_div();
 echo html_writer::start_tag('form', [
     'method' => 'get',
     'action' => $PAGE->url->out_omit_querystring(),
-    'class'  => 'mb-4',
+    'class' => 'mb-4',
 ]);
 echo '<div class="row align-items-end" style="gap: 16px;">';
 
 // Service filter.
 echo '<div class="col-auto" style="margin-right: 12px;">';
 echo html_writer::tag('label', get_string('col_name', 'local_integrationhub'),
-    ['for' => 'filter-service', 'class' => 'form-label', 'style' => 'display:block; margin-bottom:6px;']);
+['for' => 'filter-service', 'class' => 'form-label', 'style' => 'display:block; margin-bottom:6px;']);
 echo html_writer::start_tag('select', [
     'name' => 'serviceid', 'id' => 'filter-service', 'class' => 'form-select',
 ]);
@@ -126,7 +149,7 @@ echo '</div>';
 // Status filter.
 echo '<div class="col-auto" style="margin-right: 12px;">';
 echo html_writer::tag('label', get_string('col_success', 'local_integrationhub'),
-    ['for' => 'filter-status', 'class' => 'form-label', 'style' => 'display:block; margin-bottom:6px;']);
+['for' => 'filter-status', 'class' => 'form-label', 'style' => 'display:block; margin-bottom:6px;']);
 echo html_writer::start_tag('select', [
     'name' => 'status', 'id' => 'filter-status', 'class' => 'form-select',
 ]);
@@ -155,14 +178,16 @@ if (has_capability('local/integrationhub:manage', $context)) {
     echo html_writer::start_tag('form', [
         'method' => 'post',
         'action' => $PAGE->url->out_omit_querystring(),
-        'style'  => 'display: inline;',
+        'style' => 'display: inline;',
     ]);
     echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'action', 'value' => 'clearlogs']);
+    echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'serviceid', 'value' => $serviceid]);
+    echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'status', 'value' => $status]);
     echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
 
     echo html_writer::tag('button', '<i class="fa fa-trash"></i> ' . get_string('clearlogs', 'local_integrationhub'), [
-        'type'    => 'submit',
-        'class'   => 'btn btn-danger btn-sm',
+        'type' => 'submit',
+        'class' => 'btn btn-danger btn-sm',
         'onclick' => "return confirm('" . addslashes_js(get_string('clearlogs_confirm', 'local_integrationhub')) . "');",
     ]);
     echo html_writer::end_tag('form');
@@ -177,12 +202,13 @@ echo html_writer::tag('style', "
 
 // Summary.
 echo html_writer::tag('p', "<strong>{$total}</strong> " . get_string('logs', 'local_integrationhub'),
-    ['class' => 'text-muted']);
+['class' => 'text-muted']);
 
 // Logs table.
 if (empty($logs)) {
     echo html_writer::div(get_string('nologs', 'local_integrationhub'), 'alert alert-info');
-} else {
+}
+else {
     echo html_writer::start_tag('div', ['class' => 'table-responsive']);
     // Force text-dark to avoid theme white-text issues on some backgrounds
     echo html_writer::start_tag('table', ['class' => 'table table-sm table-striped table-hover', 'style' => 'color: #212529 !important;']);
@@ -190,7 +216,7 @@ if (empty($logs)) {
     // Header.
     echo '<thead class="table-dark"><tr>';
     $headers = ['col_direction', 'col_name', 'col_endpoint', 'col_method', 'col_status', 'col_latency_ms',
-                'col_attempts', 'col_success', 'col_error', 'col_time'];
+        'col_attempts', 'col_success', 'col_error', 'col_time'];
     foreach ($headers as $h) {
         echo html_writer::tag('th', get_string($h, 'local_integrationhub'));
     }
@@ -205,7 +231,8 @@ if (empty($logs)) {
         $dir = $log->direction ?? 'outbound';
         if ($dir === 'inbound') {
             echo html_writer::tag('td', html_writer::tag('span', '⬇ ' . get_string('direction_inbound', 'local_integrationhub'), ['class' => 'badge bg-info text-dark']));
-        } else {
+        }
+        else {
             echo html_writer::tag('td', html_writer::tag('span', '⬆ ' . get_string('direction_outbound', 'local_integrationhub'), ['class' => 'badge bg-secondary']));
         }
 
@@ -217,16 +244,24 @@ if (empty($logs)) {
 
         // Method badge.
         $methodclass = 'badge bg-secondary';
-        if ($log->http_method === 'GET') $methodclass = 'badge bg-success';
-        if ($log->http_method === 'POST') $methodclass = 'badge bg-primary';
-        if ($log->http_method === 'PUT') $methodclass = 'badge bg-warning text-dark';
-        if ($log->http_method === 'DELETE') $methodclass = 'badge bg-danger';
+        if ($log->http_method === 'GET')
+            $methodclass = 'badge bg-success';
+        if ($log->http_method === 'POST')
+            $methodclass = 'badge bg-primary';
+        if ($log->http_method === 'PUT')
+            $methodclass = 'badge bg-warning text-dark';
+        if ($log->http_method === 'DELETE')
+            $methodclass = 'badge bg-danger';
+        if ($log->http_method === 'AMQP')
+            $methodclass = 'badge bg-info text-dark';
         echo html_writer::tag('td', html_writer::tag('span', $log->http_method, ['class' => $methodclass]));
 
         // HTTP status.
         $statclass = '';
-        if ($log->http_status >= 200 && $log->http_status < 300) $statclass = 'text-success fw-bold';
-        else if ($log->http_status >= 400) $statclass = 'text-danger fw-bold';
+        if ($log->http_status >= 200 && $log->http_status < 300)
+            $statclass = 'text-success fw-bold';
+        else if ($log->http_status >= 400)
+            $statclass = 'text-danger fw-bold';
         echo html_writer::tag('td', html_writer::tag('span', $log->http_status ?? '—', ['class' => $statclass]));
 
         // Latency.
@@ -240,7 +275,8 @@ if (empty($logs)) {
         if ($log->success) {
             echo html_writer::tag('td', html_writer::tag('span',
                 get_string('result_success', 'local_integrationhub'), ['class' => 'badge bg-success']));
-        } else {
+        }
+        else {
             echo html_writer::tag('td', html_writer::tag('span',
                 get_string('result_failure', 'local_integrationhub'), ['class' => 'badge bg-danger']));
         }

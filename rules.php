@@ -24,9 +24,12 @@ $context = context_system::instance();
 require_capability('local/integrationhub:view', $context);
 $canmanage = has_capability('local/integrationhub:manage', $context);
 
-$action = optional_param('action', '', PARAM_ALPHANUMEXT);
-$ruleid = optional_param('ruleid', 0, PARAM_INT);
+$action  = optional_param('action', '', PARAM_ALPHANUMEXT);
+$ruleid  = optional_param('ruleid', 0, PARAM_INT);
 $confirm = optional_param('confirm', 0, PARAM_INT);
+$page    = optional_param('page', 0, PARAM_INT);
+
+const IH_RULES_PER_PAGE = 10;
 
 $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/local/integrationhub/rules.php'));
@@ -37,16 +40,18 @@ $PAGE->set_pagelayout('admin');
 // Process save.
 if ($canmanage && $action === 'save' && confirm_sesskey()) {
     $data = new stdClass();
-    $data->eventname        = required_param('eventname', PARAM_RAW); // Allow backslashes.
-    $data->serviceid        = required_param('serviceid', PARAM_INT);
-    $data->endpoint         = optional_param('endpoint', '', PARAM_RAW);
+    $data->eventname = required_param('eventname', PARAM_RAW); // Allow backslashes.
+    $data->serviceid = required_param('serviceid', PARAM_INT);
+    $data->endpoint = optional_param('endpoint', '', PARAM_RAW);
+    $data->http_method = optional_param('http_method', 'POST', PARAM_ALPHA);
     $data->payload_template = optional_param('payload_template', '', PARAM_RAW);
-    $data->enabled          = optional_param('enabled', 0, PARAM_INT);
+    $data->enabled = optional_param('enabled', 0, PARAM_INT);
 
     if ($ruleid > 0) {
         rules_registry::update_rule($ruleid, $data);
         \core\notification::success(get_string('ruleupdated', 'local_integrationhub'));
-    } else {
+    }
+    else {
         rules_registry::create_rule($data);
         \core\notification::success(get_string('rulecreated', 'local_integrationhub'));
     }
@@ -63,11 +68,17 @@ if ($canmanage && $action === 'delete' && $ruleid > 0 && confirm_sesskey()) {
 }
 
 // Load data.
-$rules = rules_registry::get_all_rules();
-$services = service_registry::get_all_services();
-$allevents = rules_registry::get_all_events_dynamic();
+$allrules  = rules_registry::get_all_rules();
+$totalrules = count($allrules);
+
+// Paginate: slice the full array for the current page.
+$page = max(0, min($page, (int)ceil($totalrules / IH_RULES_PER_PAGE) - 1));
+$rules = array_slice($allrules, $page * IH_RULES_PER_PAGE, IH_RULES_PER_PAGE);
+
+$services    = service_registry::get_all_services();
+$allevents   = rules_registry::get_all_events_dynamic();
 $commonevents = rules_registry::get_common_events();
-$editrule = null;
+$editrule    = null;
 
 if ($canmanage && $action === 'edit' && $ruleid > 0) {
     $editrule = rules_registry::get_rule($ruleid);
@@ -87,6 +98,9 @@ echo html_writer::end_tag('li');
 echo html_writer::start_tag('li', ['class' => 'nav-item']);
 echo html_writer::link(new moodle_url('/local/integrationhub/queue.php'), get_string('queue', 'local_integrationhub'), ['class' => 'nav-link']);
 echo html_writer::end_tag('li');
+echo html_writer::start_tag('li', ['class' => 'nav-item']);
+echo html_writer::link(new moodle_url('/local/integrationhub/events.php'), get_string('sent_events', 'local_integrationhub'), ['class' => 'nav-link']);
+echo html_writer::end_tag('li');
 echo html_writer::end_tag('ul');
 echo html_writer::end_div();
 
@@ -95,8 +109,8 @@ if ($canmanage) {
     echo html_writer::start_div('mb-4 d-flex', ['style' => 'gap: 12px;']);
     echo html_writer::tag('button', get_string('addrule', 'local_integrationhub'), [
         'class' => 'btn btn-primary',
-        'id'    => 'ih-btn-add',
-        'type'  => 'button',
+        'id' => 'ih-btn-add',
+        'type' => 'button',
     ]);
     echo html_writer::end_div();
 }
@@ -125,11 +139,11 @@ $allevents = rules_registry::get_all_events_dynamic();
 echo '<div class="col-md-6 mb-3">';
 echo html_writer::tag('label', get_string('rule_event', 'local_integrationhub'), ['for' => 'ih-eventname', 'class' => 'form-label', 'style' => 'display:block; margin-bottom:6px;']);
 echo html_writer::empty_tag('input', [
-    'type' => 'text', 
-    'name' => 'eventname', 
-    'id' => 'ih-eventname', 
-    'class' => 'form-control', 
-    'list' => 'ih-eventlist', 
+    'type' => 'text',
+    'name' => 'eventname',
+    'id' => 'ih-eventname',
+    'class' => 'form-control',
+    'list' => 'ih-eventlist',
     'required' => 'required',
     'placeholder' => '\core\event\user_created',
     'value' => $editrule->eventname ?? ''
@@ -149,9 +163,23 @@ echo html_writer::start_tag('select', ['name' => 'serviceid', 'id' => 'ih-servic
 echo '<option value="">' . get_string('selectservice', 'local_integrationhub') . '</option>';
 $currentsvc = $editrule->serviceid ?? 0;
 foreach ($services as $svc) {
-    if (!$svc->enabled) continue;
+    if (!$svc->enabled)
+        continue;
     $sel = ($svc->id == $currentsvc) ? 'selected' : '';
     echo "<option value='{$svc->id}' {$sel}>" . s($svc->name) . "</option>";
+}
+echo html_writer::end_tag('select');
+echo '</div>';
+
+// HTTP Method selector.
+echo '<div class="col-md-6 mb-3" id="ih-method-container">';
+echo html_writer::tag('label', get_string('rule_method', 'local_integrationhub'), ['for' => 'ih-method', 'class' => 'form-label', 'style' => 'display:block; margin-bottom:6px;']);
+echo html_writer::start_tag('select', ['name' => 'http_method', 'id' => 'ih-method', 'class' => 'form-select']);
+$methods = ['POST', 'GET', 'PUT', 'PATCH', 'DELETE'];
+$currentmethod = $editrule->http_method ?? 'POST';
+foreach ($methods as $m) {
+    $sel = ($m === $currentmethod) ? 'selected' : '';
+    echo "<option value='{$m}' {$sel}>{$m}</option>";
 }
 echo html_writer::end_tag('select');
 echo '</div>';
@@ -170,11 +198,11 @@ echo '<div class="col-md-6 mb-3 d-flex align-items-center">';
 echo html_writer::start_div('form-check mt-4');
 $checked = (!isset($editrule) || $editrule->enabled) ? 'checked' : '';
 echo html_writer::empty_tag('input', [
-    'type' => 'checkbox', 
-    'name' => 'enabled', 
-    'value' => 1, 
+    'type' => 'checkbox',
+    'name' => 'enabled',
+    'value' => 1,
     'checked' => $checked ? 'checked' : null,
-    'class' => 'form-check-input', 
+    'class' => 'form-check-input',
     'id' => 'ih-enabled'
 ]);
 echo html_writer::tag('label', get_string('enabled', 'local_integrationhub'), ['for' => 'ih-enabled', 'class' => 'form-check-label']);
@@ -192,8 +220,8 @@ echo html_writer::start_div('mt-2 d-flex justify-content-between align-items-cen
 echo html_writer::tag('div', get_string('rule_template_help', 'local_integrationhub'), ['class' => 'form-text text-muted']);
 echo html_writer::tag('button', 'Preview Payload', [
     'class' => 'btn btn-sm btn-outline-info',
-    'id'    => 'ih-btn-preview',
-    'type'  => 'button'
+    'id' => 'ih-btn-preview',
+    'type' => 'button'
 ]);
 echo html_writer::end_div();
 echo '</div>';
@@ -221,38 +249,61 @@ echo html_writer::tag('h4', get_string('rules', 'local_integrationhub'), ['class
 
 if (empty($rules)) {
     echo html_writer::div(get_string('norules', 'local_integrationhub'), 'alert alert-info');
-} else {
+}
+else {
     echo html_writer::start_tag('div', ['class' => 'table-responsive']);
     // Force text-dark to avoid theme white-text issues
     echo html_writer::start_tag('table', ['class' => 'table table-striped table-hover', 'style' => 'color: #212529 !important;']);
     echo '<thead class="table-dark"><tr>';
     echo '<th>' . get_string('col_event', 'local_integrationhub') . '</th>';
     echo '<th>' . get_string('col_service', 'local_integrationhub') . '</th>';
+    echo '<th>' . get_string('col_method', 'local_integrationhub') . '</th>';
     echo '<th>' . get_string('col_endpoint', 'local_integrationhub') . '</th>';
     echo '<th>' . get_string('col_enabled', 'local_integrationhub') . '</th>';
-    if ($canmanage) echo '<th>' . get_string('col_actions', 'local_integrationhub') . '</th>';
+    if ($canmanage)
+        echo '<th>' . get_string('col_actions', 'local_integrationhub') . '</th>';
     echo '</tr></thead>';
     echo '<tbody>';
-    
+
     foreach ($rules as $rule) {
         echo '<tr>';
         $displayname = rules_registry::get_event_display_name($rule->eventname);
         echo '<td>' . s($displayname) . '<br><small class="text-muted">' . s($rule->eventname) . '</small></td>';
-        
+
         $svcname = $services[$rule->serviceid]->name ?? 'Unknown ID:' . $rule->serviceid;
         echo '<td>' . s($svcname) . '</td>';
-        
-        echo '<td>' . ($rule->endpoint ? html_writer::tag('code', s($rule->endpoint)) : '<span class="text-muted">Default</span>') . '</td>';
-        
+
+        $svc = $services[$rule->serviceid] ?? null;
+        if ($svc && isset($svc->type) && $svc->type === 'amqp') {
+            echo '<td><span class="badge bg-warning text-dark">AMQP</span></td>';
+        }
+        elseif ($svc && isset($svc->type) && $svc->type === 'soap') {
+            echo '<td><span class="badge bg-secondary">SOAP</span></td>';
+        }
+        else {
+            // Default to REST method (blue).
+            $method = $rule->http_method ?: 'POST';
+            $badgeclass = 'bg-info text-dark';
+            if ($method === 'DELETE')
+                $badgeclass = 'bg-danger';
+            if ($method === 'GET')
+                $badgeclass = 'bg-success';
+            if ($method === 'PUT')
+                $badgeclass = 'bg-warning text-dark';
+            echo '<td><span class="badge ' . $badgeclass . '">' . s($method) . '</span></td>';
+        }
+
+        echo '<td>' . ($rule->endpoint ?html_writer::tag('code', s($rule->endpoint)) : '<span class="text-muted">Default</span>') . '</td>';
+
         $statusclass = $rule->enabled ? 'badge bg-success' : 'badge bg-secondary';
         $statuslabel = $rule->enabled ? get_string('status_active', 'local_integrationhub') : get_string('status_disabled', 'local_integrationhub');
         echo '<td><span class="' . $statusclass . '">' . $statuslabel . '</span></td>';
-        
+
         if ($canmanage) {
             echo '<td>';
             $editurl = new moodle_url($PAGE->url, ['action' => 'edit', 'ruleid' => $rule->id]);
             echo html_writer::link($editurl, '<i class="fa fa-pencil"></i>', ['class' => 'btn btn-sm btn-outline-primary me-1']);
-            
+
             $deleteurl = new moodle_url($PAGE->url, ['action' => 'delete', 'ruleid' => $rule->id, 'confirm' => 1, 'sesskey' => sesskey()]);
             echo html_writer::link($deleteurl, '<i class="fa fa-trash"></i>', [
                 'class' => 'btn btn-sm btn-outline-danger',
@@ -263,6 +314,16 @@ if (empty($rules)) {
         echo '</tr>';
     }
     echo '</tbody></table></div>';
+
+    // Paging bar — only rendered when there is more than one page.
+    if ($totalrules > IH_RULES_PER_PAGE) {
+        echo $OUTPUT->paging_bar(
+            $totalrules,
+            $page,
+            IH_RULES_PER_PAGE,
+            new moodle_url($PAGE->url, ['action' => '', 'ruleid' => 0])
+        );
+    }
 }
 
 // Initialize AMD module.

@@ -129,6 +129,7 @@ $string['result_failure'] = 'FAIL';
 $string['clearlogs'] = 'Clear Logs';
 $string['clearlogs_confirm'] = 'Are you sure you want to delete ALL logs? This cannot be undone.';
 $string['logs_cleared'] = 'All logs have been cleared.';
+$string['logs_cleared_service'] = 'Logs for this service have been cleared.';
 
 // Privacy.
 $string['privacy:metadata'] = 'The Integration Hub plugin does not store personal user data. It only logs HTTP requests to external services.';
@@ -141,6 +142,7 @@ $string['rule_event'] = 'Moodle Event';
 $string['rule_event_help'] = 'Enter the full class name of the event (e.g. \core\event\user_created). You can select from the list or type a custom one. Note: Custom events must also be registered in db/events.php to be caught.';
 $string['rule_service'] = 'Target Service';
 $string['rule_endpoint'] = 'Endpoint Override';
+$string['rule_method'] = 'HTTP Method';
 $string['rule_template'] = 'Payload Template (JSON)';
 $string['rule_template_help'] = 'Use placeholders like {{userid}}, {{courseid}}, {{objectid}}. Leave empty to send raw event data.';
 $string['selectevent'] = 'Select an event...';
@@ -165,6 +167,12 @@ $string['amqp_port'] = 'Port';
 $string['amqp_user'] = 'User';
 $string['amqp_pass'] = 'Password';
 $string['amqp_vhost'] = 'vHost';
+$string['amqp_exchange'] = 'Exchange';
+$string['amqp_routing_key_default'] = 'Routing Key';
+$string['amqp_queue_declare'] = 'Queue to Declare (Optional)';
+$string['amqp_routing_key_help'] = 'The default Routing Key used when publishing messages. Events can override this via the "Endpoint" field.';
+$string['amqp_queue_help'] = 'If set, this Queue will be declared (created) before publishing. Useful for "Work Queue" patterns.';
+$string['amqp_dlq'] = 'Dead Letter Queue (Optional)';
 
 // Queue.
 $string['queue'] = 'Queue Monitor';
@@ -193,7 +201,13 @@ $string['orphans_purged'] = '{$a} orphan tasks purged successfully.';
 $string['purge_orphans'] = 'Purge Orphans';
 $string['purge_orphans_confirm'] = 'Are you sure you want to delete all tasks whose rules have been deleted?';
 $string['task_delete_confirm'] = 'Are you sure you want to delete this task?';
-$string['dlq_delete_confirm'] = 'Are you sure you want to delete this failed event?';
+$string['dlq_delete_confirm'] = 'Are you sure you want to delete this DLQ item?';
+
+// Queue Payload Viewer
+$string['view_payload'] = 'View Payload';
+$string['payload_source'] = 'Source Data';
+$string['payload_final'] = 'Final Payload';
+$string['close'] = 'Close';
 
 // Dashboard Charts.
 $string['integrationstatus'] = 'Integration Status (All time)';
@@ -215,3 +229,10 @@ $string['response_queue'] = 'Response Queue';
 $string['response_queue_help'] = 'AMQP queue name to consume response messages from. Leave empty to disable inbound AMQP.';
 $string['task_consume_responses'] = 'Consume AMQP response messages';
 $string['col_direction'] = 'Direction';
+
+// Sent Events Page.
+$string['sent_events'] = 'Sent Events';
+$string['latest_events_title'] = 'Last {$a} Outbound Events';
+$string['latest_events_limit'] = 'Sent Events Limit';
+$string['latest_events_limit_desc'] = 'Number of latest sent events to display in the "Sent Events" tab.';
+$string['no_events_logged'] = 'No outbound events logged recently.';

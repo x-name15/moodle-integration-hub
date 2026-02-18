@@ -10,6 +10,7 @@
       <FIELDS>
         <FIELD NAME="id"                 TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="name"               TYPE="char" LENGTH="255" NOTNULL="true" COMMENT="Unique service name (slug)"/>
+        <FIELD NAME="type"               TYPE="char" LENGTH="10"  NOTNULL="true" DEFAULT="rest" COMMENT="rest, amqp, soap"/>
         <FIELD NAME="base_url"           TYPE="char" LENGTH="1333" NOTNULL="true" COMMENT="Base URL of the service"/>
         <FIELD NAME="auth_type"          TYPE="char" LENGTH="20"  NOTNULL="true" DEFAULT="bearer" COMMENT="bearer or apikey"/>
         <FIELD NAME="auth_token"         TYPE="text" NOTNULL="false" COMMENT="Token or API key (encrypted)"/>
@@ -79,6 +80,7 @@
         <FIELD NAME="eventname"        TYPE="char" LENGTH="255" NOTNULL="true" COMMENT="Full class name of the event"/>
         <FIELD NAME="serviceid"        TYPE="int"  LENGTH="10"  NOTNULL="true"/>
         <FIELD NAME="endpoint"         TYPE="char" LENGTH="255" NOTNULL="false" COMMENT="Optional override of service base endpoint"/>
+        <FIELD NAME="http_method"      TYPE="char" LENGTH="10"  NOTNULL="true" DEFAULT="POST" COMMENT="HTTP Method for REST (GET, POST, PUT, DELETE)"/>
         <FIELD NAME="payload_template" TYPE="text" NOTNULL="false" COMMENT="JSON template with placeholders"/>
         <FIELD NAME="enabled"          TYPE="int"  LENGTH="1"   NOTNULL="true" DEFAULT="1"/>
         <FIELD NAME="timecreated"      TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>

@@ -15,7 +15,8 @@ use PhpAmqpLib\Connection\AMQPSSLConnection;
  * @copyright  2026 Integration Hub Contributors
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class amqp_helper {
+class amqp_helper
+{
 
     /**
      * Parse an AMQP URL and create a connection.
@@ -25,18 +26,28 @@ class amqp_helper {
      * @return AMQPStreamConnection
      * @throws \Exception If URL is invalid or connection fails.
      */
-    public static function create_connection(string $url, int $timeout = 5): AMQPStreamConnection {
+    public static function create_connection(string $url, int $timeout = 5): AMQPStreamConnection
+    {
         $parsed = parse_url($url);
         if (!$parsed || !isset($parsed['host'])) {
             throw new \Exception('Invalid AMQP connection string: ' . $url);
         }
 
         $scheme = $parsed['scheme'] ?? 'amqp';
-        $host   = $parsed['host'];
-        $port   = $parsed['port'] ?? ($scheme === 'amqps' ? 5671 : 5672);
-        $user   = $parsed['user'] ?? 'guest';
-        $pass   = $parsed['pass'] ?? 'guest';
-        $vhost  = isset($parsed['path']) && $parsed['path'] !== '/' ? substr($parsed['path'], 1) : '/';
+        $host = $parsed['host'];
+        $port = $parsed['port'] ?? ($scheme === 'amqps' ? 5671 : 5672);
+        $user = $parsed['user'] ?? 'guest';
+        $pass = $parsed['pass'] ?? 'guest';
+        $path = isset($parsed['path']) ? $parsed['path'] : '/';
+
+        // Handle path extraction for vhost
+        if ($path !== '/' && strpos($path, '/') === 0) {
+            $path = substr($path, 1);
+        }
+        $vhost = urldecode($path);
+        if ($vhost === '') {
+            $vhost = '/';
+        }
 
         if ($scheme === 'amqps') {
             // Standard SSL settings - can be extended with certs if needed.
@@ -47,15 +58,15 @@ class amqp_helper {
             return new AMQPSSLConnection(
                 $host, $port, $user, $pass, $vhost,
                 $ssloptions,
-                ['connection_timeout' => $timeout, 'read_write_timeout' => $timeout]
-            );
+            ['connection_timeout' => $timeout, 'read_write_timeout' => $timeout]
+                );
         }
 
         return new AMQPStreamConnection(
             $host, $port, $user, $pass, $vhost,
             false, 'AMQPLAIN', null, 'en_US',
             $timeout, $timeout
-        );
+            );
     }
 
     /**
@@ -64,7 +75,8 @@ class amqp_helper {
      * @param \PhpAmqpLib\Channel\AMQPChannel $channel
      * @param string $queue
      */
-    public static function ensure_queue($channel, string $queue): void {
+    public static function ensure_queue($channel, string $queue): void
+    {
         // durable: true, exclusive: false, auto_delete: false
         $channel->queue_declare($queue, false, true, false, false);
     }

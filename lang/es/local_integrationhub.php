@@ -129,6 +129,7 @@ $string['result_failure'] = 'FALLO';
 $string['clearlogs'] = 'Borrar logs';
 $string['clearlogs_confirm'] = '¿Estás seguro de que quieres borrar TODOS los logs? Esta acción no se puede deshacer.';
 $string['logs_cleared'] = 'Todos los logs han sido borrados.';
+$string['logs_cleared_service'] = 'Los registros de este servicio han sido borrados.';
 
 // Privacy.
 $string['privacy:metadata'] = 'El plugin Integration Hub no almacena datos personales de usuarios. Solo registra peticiones HTTP a servicios externos.';
@@ -141,6 +142,7 @@ $string['rule_event'] = 'Evento de Moodle';
 $string['rule_event_help'] = 'Ingresa el nombre completo de la clase del evento (ej: \core\event\user_created). Puedes seleccionar de la lista o escribir uno personalizado. Nota: Los eventos personalizados también deben estar registrados en db/events.php para ser capturados.';
 $string['rule_service'] = 'Servicio destino';
 $string['rule_endpoint'] = 'Sobrescribir endpoint';
+$string['rule_method'] = 'Método HTTP';
 $string['rule_template'] = 'Plantilla de payload (JSON)';
 $string['rule_template_help'] = 'Usa marcadores como {{userid}}, {{courseid}}, {{objectid}}. Déjalo vacío para enviar los datos crudos del evento.';
 $string['selectevent'] = 'Selecciona un evento...';
@@ -165,6 +167,12 @@ $string['amqp_port'] = 'Puerto';
 $string['amqp_user'] = 'Usuario';
 $string['amqp_pass'] = 'Contraseña';
 $string['amqp_vhost'] = 'vHost';
+$string['amqp_exchange'] = 'Exchange';
+$string['amqp_routing_key_default'] = 'Routing Key';
+$string['amqp_queue_declare'] = 'Cola a Declarar (Opcional)';
+$string['amqp_routing_key_help'] = 'El Routing Key por defecto usado al publicar. Los eventos pueden sobrescribir esto con el campo "Endpoint".';
+$string['amqp_queue_help'] = 'Si se define, esta Cola será declarada (creada) antes de publicar. Útil para patrones de "Work Queue".';
+$string['amqp_dlq'] = 'Dead Letter Queue (Opcional)';
 
 // Queue.
 $string['queue'] = 'Monitor de Cola';
@@ -195,6 +203,12 @@ $string['purge_orphans_confirm'] = '¿Está seguro de que desea eliminar todas l
 $string['task_delete_confirm'] = '¿Está seguro de que desea eliminar esta tarea?';
 $string['dlq_delete_confirm'] = '¿Estás seguro de que deseas eliminar este evento fallido?';
 
+// Queue Payload Viewer
+$string['view_payload'] = 'Ver Payload';
+$string['payload_source'] = 'Datos Origen';
+$string['payload_final'] = 'Payload Final';
+$string['close'] = 'Cerrar';
+
 // Dashboard Charts.
 $string['integrationstatus'] = 'Estado de integración (Histórico)';
 $string['latencytrend'] = 'Tendencia de latencia (Últimas 200 peticiones)';
@@ -215,3 +229,10 @@ $string['response_queue'] = 'Cola de respuesta';
 $string['response_queue_help'] = 'Nombre de la cola AMQP para consumir mensajes de respuesta. Dejar vacío para desactivar AMQP entrante.';
 $string['task_consume_responses'] = 'Consumir mensajes de respuesta AMQP';
 $string['col_direction'] = 'Dirección';
+
+// Sent Events Page.
+$string['sent_events'] = 'Eventos Enviados';
+$string['latest_events_title'] = 'Últimos {$a} Eventos Salientes';
+$string['latest_events_limit'] = 'Límite de Eventos Enviados';
+$string['latest_events_limit_desc'] = 'Número de eventos recientes a mostrar en la pestaña "Eventos Enviados".';
+$string['no_events_logged'] = 'No hay eventos salientes registrados recientemente.';

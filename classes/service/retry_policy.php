@@ -22,7 +22,7 @@ defined('MOODLE_INTERNAL') || die();
  * Retry Policy — configurable retry logic with exponential backoff.
  *
  * @package    local_integrationhub
- * @copyright  2026 Integration Hub Contributors
+ * @copyright  Mr Jacket - Felix Manrique
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class retry_policy {

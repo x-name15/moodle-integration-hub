@@ -34,7 +34,7 @@ defined('MOODLE_INTERNAL') || die();
  *   - payload     (array)  The decoded JSON payload.
  *
  * @package    local_integrationhub
- * @copyright  2026 Integration Hub Contributors
+ * @copyright  Mr Jacket
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class webhook_received extends \core\event\base {

@@ -28,7 +28,7 @@ defined('MOODLE_INTERNAL') || die();
  *   HALFOPEN → Testing. One request is allowed through to check if the service recovered.
  *
  * @package    local_integrationhub
- * @copyright  2026 Integration Hub Contributors
+ * @copyright  Mr Jacket - Felix Manrique
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class circuit_breaker {
@@ -95,16 +95,12 @@ class circuit_breaker {
         }
 
         if ($state->state === self::STATE_OPEN) {
-            // Check if cooldown has expired.
             if ($state->last_failure && (time() - $state->last_failure) >= $this->cooldown) {
-                // Transition to half-open.
                 $this->set_state(self::STATE_HALFOPEN);
                 return true;
             }
             return false;
         }
-
-        // HALFOPEN → allow one test request.
         return true;
     }
 
@@ -152,7 +148,6 @@ class circuit_breaker {
         $state = $DB->get_record(self::TABLE, ['serviceid' => $this->serviceid]);
 
         if (!$state) {
-            // Auto-create if missing.
             $state = new \stdClass();
             $state->serviceid = $this->serviceid;
             $state->state = self::STATE_CLOSED;

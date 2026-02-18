@@ -24,45 +24,56 @@ defined('MOODLE_INTERNAL') || die();
  * Listens to Moodle events and dispatches them to external services based on configured rules.
  *
  * @package    local_integrationhub
- * @copyright  2026 Integration Hub Contributors
+ * @copyright  Mr Jacket
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class observer {
+class observer
+{
 
     /**
      * Handle observed events.
      *
      * @param \core\event\base $event The Moodle event.
      */
-    public static function handle_event(\core\event\base $event) {
+    public static function handle_event(\core\event\base $event)
+    {
         global $DB;
-
-        // 1. Get event name.
         $eventname = $event->eventname; // e.g., \core\event\user_created
-
-        // 2. Check for active rules matching this event.
-        // We use a simple query. In high-traffic sites, this should be cached.
         $rules = $DB->get_records('local_integrationhub_rules', [
             'eventname' => $eventname,
-            'enabled'   => 1,
+            'enabled' => 1,
         ]);
 
         if (empty($rules)) {
             return;
         }
 
-        // 3. Dispatch task for each rule.
-        // We defer processing to Adhoc Tasks to avoid blocking the user action.
+        $cache = \cache::make('local_integrationhub', 'event_dedupe');
+        $sig_data = [
+            'name' => $eventname,
+            'obj' => $event->objectid,
+            'user' => $event->userid,
+            'rel' => $event->relateduserid,
+            'crud' => $event->crud,
+        ];
+        $signature = sha1(json_encode($sig_data));
+
+        if ($cache->get($signature)) {
+            return;
+        }
+        $dispatched = false;
         foreach ($rules as $rule) {
             $task = new \local_integrationhub\task\dispatch_event_task();
             $task->set_custom_data([
-                'ruleid'    => $rule->id,
+                'ruleid' => $rule->id,
                 'eventdata' => $event->get_data(),
                 'eventcontextid' => $event->contextid,
             ]);
-            
-            // Queue the task.
             \core\task\manager::queue_adhoc_task($task);
+            $dispatched = true;
+        }
+        if ($dispatched) {
+            $cache->set($signature, 1);
         }
     }
 }
