@@ -18,7 +18,7 @@ namespace local_integrationhub\task;
 
 defined('MOODLE_INTERNAL') || die();
 
-use local_integrationhub\gateway;
+use local_integrationhub\mih;
 use local_integrationhub\service\registry as service_registry;
 
 /**
@@ -105,12 +105,12 @@ class dispatch_event_task extends \core\task\adhoc_task
         mtrace("Dispatching event '{$rule->eventname}' to service '{$service->name}' at endpoint '{$endpoint}'...");
 
         try {
-            $gateway = gateway::instance();
+            $mih = mih::instance();
 
             // Log payload for debugging.
             mtrace("Payload: " . json_encode($payload));
 
-            $response = $gateway->request($service->name, $endpoint, $payload, $method);
+            $response = $mih->execute_request($service->name, $endpoint, $payload, $method);
 
             if ($response->is_ok()) {
                 $status_str = $response->httpstatus ? "HTTP {$response->httpstatus}" : "OK";
