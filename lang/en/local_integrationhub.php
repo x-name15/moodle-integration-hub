@@ -41,6 +41,8 @@ $string['default_max_retries'] = 'Default max retries';
 $string['default_max_retries_desc'] = 'Default maximum retry attempts for new services.';
 $string['max_log_entries'] = 'Max log entries';
 $string['max_log_entries_desc'] = 'Maximum number of log entries to keep in the database. Older entries are automatically deleted when this limit is exceeded. Set to 0 for unlimited (not recommended).';
+$string['enable_firewall'] = 'Enable Webhook Firewall';
+$string['enable_firewall_desc'] = 'If disabled, all security checks (IP, HMAC, Rate Limit) will be skipped for inbound webhooks.';
 
 // Dashboard.
 $string['services'] = 'Registered Services';
@@ -235,4 +237,14 @@ $string['sent_events'] = 'Sent Events';
 $string['latest_events_title'] = 'Last {$a} Outbound Events';
 $string['latest_events_limit'] = 'Sent Events Limit';
 $string['latest_events_limit_desc'] = 'Number of latest sent events to display in the "Sent Events" tab.';
+
+// Firewall Settings.
+$string['firewallssettings'] = 'Inbound Firewall & Security';
+$string['ip_whitelist'] = 'IP Whitelist';
+$string['ip_whitelist_help'] = 'Comma-separated list of allowed IPs or CIDR blocks (e.g., 192.168.1.1, 10.0.0.0/24). Leave empty to allow all IPs.';
+$string['rate_limit_requests'] = 'Rate Limit (Requests)';
+$string['rate_limit_window'] = 'Rate Limit Window (Seconds)';
+$string['hmac_secret'] = 'HMAC Secret';
+$string['hmac_algo'] = 'Hashing Algorithm';
+$string['hmac_header'] = 'Signature Header';
 $string['no_events_logged'] = 'No outbound events logged recently.';

@@ -20,6 +20,15 @@
         <FIELD NAME="cb_failure_threshold" TYPE="int" LENGTH="3" NOTNULL="true" DEFAULT="5" COMMENT="Failures before circuit opens"/>
         <FIELD NAME="cb_cooldown"        TYPE="int"  LENGTH="5"  NOTNULL="true" DEFAULT="30" COMMENT="Seconds before half-open test"/>
         <FIELD NAME="response_queue"     TYPE="char" LENGTH="255" NOTNULL="false" COMMENT="AMQP response queue name for inbound consumer"/>
+        <!-- Firewall Fields -->
+        <FIELD NAME="ip_whitelist"       TYPE="text" NOTNULL="false" COMMENT="Comma-separated IPs or CIDRs allowed"/>
+        <FIELD NAME="hmac_secret"        TYPE="text" NOTNULL="false" COMMENT="Shared secret for HMAC signature validation"/>
+        <FIELD NAME="hmac_algo"          TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="sha256" COMMENT="Hashing algorithm (sha256, sha1)"/>
+        <FIELD NAME="hmac_header"        TYPE="char" LENGTH="100" NOTNULL="true" DEFAULT="X-Hub-Signature-256" COMMENT="Header containing the signature"/>
+        <FIELD NAME="rate_limit_requests" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="Max requests per window. 0 = disabled"/>
+        <FIELD NAME="rate_limit_window"  TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="60" COMMENT="Time window in seconds"/>
+        <FIELD NAME="payload_schema"     TYPE="text" NOTNULL="false" COMMENT="JSON schema for validation"/>
+        <!-- End Firewall Fields -->
         <FIELD NAME="enabled"            TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="1" COMMENT="1=active, 0=disabled"/>
         <FIELD NAME="timecreated"        TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="timemodified"       TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
@@ -113,6 +122,25 @@
       <INDEXES>
         <INDEX NAME="ix_eventname_dlq" UNIQUE="false" FIELDS="eventname"/>
         <INDEX NAME="ix_timecreated_dlq" UNIQUE="false" FIELDS="timecreated"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- Replay Protection Nonces -->
+    <TABLE NAME="local_integrationhub_nonce" COMMENT="Stores processed nonces to prevent replay attacks">
+      <FIELDS>
+        <FIELD NAME="id"          TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="serviceid"   TYPE="int"  LENGTH="10" NOTNULL="true" COMMENT="Service context"/>
+        <FIELD NAME="nonce"       TYPE="char" LENGTH="64" NOTNULL="true" COMMENT="Unique nonce string"/>
+        <FIELD NAME="timestamp"   TYPE="int"  LENGTH="10" NOTNULL="true" COMMENT="Request timestamp provided by sender"/>
+        <FIELD NAME="timecreated" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="When we received it"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_serviceid_nonce" TYPE="foreign" FIELDS="serviceid" REFTABLE="local_integrationhub_svc" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="ix_nonce_service" UNIQUE="true" FIELDS="serviceid, nonce"/>
+        <INDEX NAME="ix_timecreated" UNIQUE="false" FIELDS="timecreated"/>
       </INDEXES>
     </TABLE>
 

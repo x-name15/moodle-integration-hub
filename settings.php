@@ -41,6 +41,14 @@ if ($hassiteconfig) {
     )
         ));
 
+    // Firewall master switch.
+    $settings->add(new admin_setting_configcheckbox(
+        'local_integrationhub/enable_firewall',
+        get_string('enable_firewall', 'local_integrationhub'),
+        get_string('enable_firewall_desc', 'local_integrationhub'),
+        1
+    ));
+
     // Default timeout for new services.
     $settings->add(new admin_setting_configtext(
         'local_integrationhub/default_timeout',

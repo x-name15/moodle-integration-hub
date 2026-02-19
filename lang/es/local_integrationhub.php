@@ -235,4 +235,16 @@ $string['sent_events'] = 'Eventos Enviados';
 $string['latest_events_title'] = 'Últimos {$a} Eventos Salientes';
 $string['latest_events_limit'] = 'Límite de Eventos Enviados';
 $string['latest_events_limit_desc'] = 'Número de eventos recientes a mostrar en la pestaña "Eventos Enviados".';
+
+// Firewall Settings (Configuración Global & Servicio)
+$string['enable_firewall'] = 'Habilitar Webhook Firewall';
+$string['enable_firewall_desc'] = 'Si se desactiva, todas las comprobaciones de seguridad (IP, HMAC, Rate Limit) se saltarán en los webhooks entrantes.';
+$string['firewallssettings'] = 'Firewall y Seguridad Entrante';
+$string['ip_whitelist'] = 'Lista blanca de IPs';
+$string['ip_whitelist_help'] = 'Lista separada por comas de IPs o bloques CIDR permitidos (ej: 192.168.1.1, 10.0.0.0/24). Dejar vacío para permitir todas las IPs.';
+$string['rate_limit_requests'] = 'Límite de Peticiones (Rate Limit)';
+$string['rate_limit_window'] = 'Ventana de Tiempo (Segundos)';
+$string['hmac_secret'] = 'Secreto HMAC';
+$string['hmac_algo'] = 'Algoritmo de Hashing';
+$string['hmac_header'] = 'Cabecera de Firma';
 $string['no_events_logged'] = 'No hay eventos salientes registrados recientemente.';

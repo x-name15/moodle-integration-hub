@@ -95,6 +95,15 @@ class registry
         $record->cb_failure_threshold = (int)($data->cb_failure_threshold ?? 5);
         $record->cb_cooldown = (int)($data->cb_cooldown ?? 30);
         $record->response_queue = clean_param($data->response_queue ?? '', PARAM_ALPHANUMEXT);
+        // Firewall fields
+        $record->ip_whitelist = clean_param($data->ip_whitelist ?? '', PARAM_RAW_TRIMMED); // IPs/CIDRs
+        $record->hmac_secret  = clean_param($data->hmac_secret ?? '', PARAM_RAW_TRIMMED);
+        $record->hmac_algo    = clean_param($data->hmac_algo ?? 'sha256', PARAM_ALPHA);
+        $record->hmac_header  = clean_param($data->hmac_header ?? 'X-Hub-Signature-256', PARAM_RAW_TRIMMED);
+        $record->rate_limit_requests = (int)($data->rate_limit_requests ?? 0);
+        $record->rate_limit_window   = (int)($data->rate_limit_window ?? 60);
+        $record->payload_schema      = $data->payload_schema ?? ''; // JSON Schema can be complex, keep raw or use CLEAN_PARAM handling if strict.
+
         $record->enabled = 1;
         $record->timecreated = $now;
         $record->timemodified = $now;
@@ -160,6 +169,28 @@ class registry
         }
         if (isset($data->response_queue)) {
             $record->response_queue = clean_param($data->response_queue, PARAM_ALPHANUMEXT);
+        }
+        // Firewall updates
+        if (isset($data->ip_whitelist)) {
+            $record->ip_whitelist = clean_param($data->ip_whitelist, PARAM_RAW_TRIMMED);
+        }
+        if (isset($data->hmac_secret)) {
+            $record->hmac_secret = clean_param($data->hmac_secret, PARAM_RAW_TRIMMED);
+        }
+        if (isset($data->hmac_algo)) {
+            $record->hmac_algo = clean_param($data->hmac_algo, PARAM_ALPHA);
+        }
+        if (isset($data->hmac_header)) {
+            $record->hmac_header = clean_param($data->hmac_header, PARAM_RAW_TRIMMED);
+        }
+        if (isset($data->rate_limit_requests)) {
+            $record->rate_limit_requests = (int)$data->rate_limit_requests;
+        }
+        if (isset($data->rate_limit_window)) {
+            $record->rate_limit_window = (int)$data->rate_limit_window;
+        }
+        if (isset($data->payload_schema)) {
+            $record->payload_schema = $data->payload_schema;
         }
 
         $record->timemodified = time();

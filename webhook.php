@@ -71,7 +71,39 @@ if (empty($service->enabled)) {
     exit;
 }
 
-// 3. Authenticate — check Bearer token or X-API-Key against the service's auth_token.
+// 3. Read and parse the JSON logic first.
+// We need the raw body for HMAC signature verification and the decoded payload for Schema/Logic.
+$rawbody = file_get_contents('php://input'); 
+$payload = null;
+
+if (!empty($rawbody)) {
+    $payload = json_decode($rawbody, true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        // We don't exit yet, firewall might block this IP regardless of valid JSON.
+        // But if we continue, payload is null.
+        // Let's allow firewall to decide if it cares about malformed JSON (e.g. rate limit still applies).
+    }
+}
+
+// --- FIREWALL INSPECTION START ---
+if (get_config('local_integrationhub', 'enable_firewall')) {
+    try {
+        $firewall = new \local_integrationhub\firewall\manager();
+        // Pass decoded payload. The guards can also access raw php://input internaly or we could pass raw.
+        // Ideally guards should rely on what we pass. 
+        // For now, HMAC guard reads input stream again (which might fail if not buffered).
+        // Let's rely on the fact that we haven't modified the stream wrapper.
+        $firewall->inspect($service, $payload ?? []);
+    } catch (\moodle_exception $e) {
+        // Determine appropriate HTTP code based on error type?
+        http_response_code(403); 
+        echo json_encode(['success' => false, 'error' => 'Firewall blocked: ' . $e->getMessage()]);
+        exit;
+    }
+}
+// --- FIREWALL INSPECTION END ---
+
+// 4. Authenticate — check Bearer token or X-API-Key against the service's auth_token.
 $authenticated = false;
 $expectedtoken = trim($service->auth_token ?? '');
 
@@ -110,16 +142,14 @@ if (!$authenticated) {
     exit;
 }
 
-// 4. Read and parse the JSON body.
-$rawbody = file_get_contents('php://input');
+// 5. Validate JSON if not done/failed before authentication (but after firewall).
 if (empty($rawbody)) {
     http_response_code(400);
     echo json_encode(['success' => false, 'error' => 'Empty request body']);
     exit;
 }
 
-$payload = json_decode($rawbody, true);
-if (json_last_error() !== JSON_ERROR_NONE) {
+if ($payload === null) {
     http_response_code(400);
     echo json_encode(['success' => false, 'error' => 'Invalid JSON: ' . json_last_error_msg()]);
     exit;

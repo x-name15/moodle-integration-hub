@@ -50,7 +50,7 @@ php admin/cli/upgrade.php
 ```
 
 ### 🗺️ Future Roadmap?
-- [ ] Webhook Firewall
+
 - [ ] Better stability
 - [ ] Webhook ingress (receive events from external services)
 - [ ] Kafka support

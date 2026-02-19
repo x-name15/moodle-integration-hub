@@ -57,7 +57,16 @@ if ($canmanage && $action === 'save' && confirm_sesskey()) {
     $data->retry_backoff       = optional_param('retry_backoff', 1, PARAM_INT);
     $data->cb_failure_threshold = optional_param('cb_failure_threshold', 5, PARAM_INT);
     $data->cb_cooldown         = optional_param('cb_cooldown', 30, PARAM_INT);
+    $data->cb_cooldown         = optional_param('cb_cooldown', 30, PARAM_INT);
     $data->response_queue      = optional_param('response_queue', '', PARAM_ALPHANUMEXT);
+
+    // Firewall Fields
+    $data->ip_whitelist        = optional_param('ip_whitelist', '', PARAM_RAW_TRIMMED);
+    $data->hmac_secret         = optional_param('hmac_secret', '', PARAM_RAW_TRIMMED);
+    $data->hmac_algo           = optional_param('hmac_algo', 'sha256', PARAM_ALPHA);
+    $data->hmac_header         = optional_param('hmac_header', 'X-Hub-Signature-256', PARAM_RAW_TRIMMED);
+    $data->rate_limit_requests = optional_param('rate_limit_requests', 0, PARAM_INT);
+    $data->rate_limit_window   = optional_param('rate_limit_window', 60, PARAM_INT);
 
     // SERVER-SIDE URL RECONSTRUCTION FOR AMQP
     // This ensures that even if JS fails to update the hidden base_url field,
@@ -544,10 +553,65 @@ foreach ($fields as $field) {
     if ($fname === 'response_queue') {
         echo html_writer::tag('div', get_string('response_queue_help', 'local_integrationhub'), ['class' => 'form-text text-muted']);
     }
-    echo '</div>';
+    echo '</div>'; // .col-md-6 mb-3 (or similar from loop)
 }
 
-echo '</div>'; // .row
+// --- FIREWALL SECTION (Collapsible) ---
+if (get_config('local_integrationhub', 'enable_firewall')) {
+    echo '<div class="col-12 mt-3">';
+    echo '<div class="card border-warning">';
+    echo '<div class="card-header bg-warning text-dark fw-bold" style="cursor:pointer;" onclick="var target=document.getElementById(\'ih-firewall-fields\'); target.classList.toggle(\'d-none\');">';
+    echo '<i class="fa fa-shield"></i> ' . get_string('firewallssettings', 'local_integrationhub') . ' <small class="float-end"><i class="fa fa-chevron-down"></i></small>';
+    echo '</div>';
+    echo '<div class="card-body d-none" id="ih-firewall-fields">';
+    echo '<div class="row">';
+    
+    // IP Whitelist
+    echo '<div class="col-md-12 mb-3">';
+    echo html_writer::tag('label', get_string('ip_whitelist', 'local_integrationhub'), ['class' => 'form-label fw-bold']);
+    echo html_writer::tag('textarea', $editservice->ip_whitelist ?? '', [
+        'name' => 'ip_whitelist', 'class' => 'form-control', 'rows' => 2,
+        'placeholder' => '192.168.1.1, 10.0.0.0/24'
+    ]);
+    echo html_writer::tag('div', get_string('ip_whitelist_help', 'local_integrationhub'), ['class' => 'form-text']);
+    echo '</div>';
+    
+    // Rate Limiting
+    echo '<div class="col-md-6 mb-3">';
+    echo html_writer::tag('label', get_string('rate_limit_requests', 'local_integrationhub'), ['class' => 'form-label fw-bold']);
+    echo html_writer::empty_tag('input', ['type' => 'number', 'name' => 'rate_limit_requests', 'class' => 'form-control', 'value' => $editservice->rate_limit_requests ?? 0]);
+    echo '</div>';
+    echo '<div class="col-md-6 mb-3">';
+    echo html_writer::tag('label', get_string('rate_limit_window', 'local_integrationhub'), ['class' => 'form-label fw-bold']);
+    echo html_writer::empty_tag('input', ['type' => 'number', 'name' => 'rate_limit_window', 'class' => 'form-control', 'value' => $editservice->rate_limit_window ?? 60]);
+    echo '</div>';
+    
+    // HMAC Settings
+    echo '<div class="col-md-12"><hr><h6>HMAC Signature Verification</h6></div>';
+    echo '<div class="col-md-6 mb-3">';
+    echo html_writer::tag('label', get_string('hmac_secret', 'local_integrationhub'), ['class' => 'form-label fw-bold']);
+    echo html_writer::empty_tag('input', ['type' => 'password', 'name' => 'hmac_secret', 'class' => 'form-control', 'value' => $editservice->hmac_secret ?? '']);
+    echo '</div>';
+    echo '<div class="col-md-3 mb-3">';
+    echo html_writer::tag('label', get_string('hmac_algo', 'local_integrationhub'), ['class' => 'form-label']);
+    echo html_writer::start_tag('select', ['name' => 'hmac_algo', 'class' => 'form-select']);
+    $algos = ['sha256' => 'SHA-256', 'sha1' => 'SHA-1'];
+    foreach ($algos as $k => $v) {
+        $sel = (($editservice->hmac_algo ?? 'sha256') === $k) ? 'selected' : '';
+        echo "<option value='{$k}' {$sel}>{$v}</option>";
+    }
+    echo html_writer::end_tag('select');
+    echo '</div>';
+    echo '<div class="col-md-3 mb-3">';
+    echo html_writer::tag('label', get_string('hmac_header', 'local_integrationhub'), ['class' => 'form-label']);
+    echo html_writer::empty_tag('input', ['type' => 'text', 'name' => 'hmac_header', 'class' => 'form-control', 'value' => $editservice->hmac_header ?? 'X-Hub-Signature-256']);
+    echo '</div>';
+    
+    echo '</div>'; // .row
+    echo '</div>'; // .card-body
+    echo '</div>'; // .card
+    echo '</div>'; // .col-12
+}
 
 // Form buttons.
 echo html_writer::start_div('d-flex');

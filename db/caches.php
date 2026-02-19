@@ -22,4 +22,11 @@ $definitions = [
         'simpledata' => true, // simple boolean/timestamp data
         'ttl' => 60, // 1 minute deduplication window
     ],
+    // Rate Limiter cache for Webbox Firewall
+    'rate_limit' => [
+        'mode' => cache_store::MODE_APPLICATION,
+        'simplekeys' => true,
+        'simpledata' => true, // Stores integer counts
+        'ttl' => 3600, // Default TTL (though code sets specific TTLs)
+    ],
 ];
