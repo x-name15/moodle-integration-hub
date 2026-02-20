@@ -16,7 +16,13 @@
 
 namespace local_integrationhub\transport;
 
-defined('MOODLE_INTERNAL') || die();
+/**
+ * DB/System definition.
+ *
+ * @package    local_integrationhub
+ * @copyright  2026 Integration Hub Contributors
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
 /**
  * Interface contract.

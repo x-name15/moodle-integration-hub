@@ -16,8 +16,6 @@
 
 namespace local_integrationhub\event;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Event observer for Integration Hub.
  *

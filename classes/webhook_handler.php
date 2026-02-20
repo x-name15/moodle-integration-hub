@@ -16,8 +16,6 @@
 
 namespace local_integrationhub;
 
-defined('MOODLE_INTERNAL') || die();
-
 use local_integrationhub\service\registry as service_registry;
 
 /**
@@ -39,8 +37,7 @@ class webhook_handler
      * @param string    $source   The inbound source ('webhook' or 'amqp').
      * @return array ['success' => bool, 'error' => string|null]
      */
-    public static function handle(\stdClass $service, array $payload, string $source = 'webhook'): array
-    {
+    public static function handle(\stdClass $service, array $payload, string $source = 'webhook'): array {
         global $DB;
 
         $starttime = microtime(true);
@@ -73,8 +70,7 @@ class webhook_handler
             $event->trigger();
 
             return ['success' => true, 'error' => null];
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             // Log the error.
             $log = new \stdClass();
             $log->serviceid = $service->id;
@@ -90,8 +86,7 @@ class webhook_handler
 
             try {
                 $DB->insert_record('local_integrationhub_log', $log);
-            }
-            catch (\Exception $logerror) {
+            } catch (\Exception $logerror) {
                 debugging('MIH: Failed to log inbound error: ' . $logerror->getMessage(), DEBUG_DEVELOPER);
             }
 

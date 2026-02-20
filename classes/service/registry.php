@@ -16,8 +16,6 @@
 
 namespace local_integrationhub\service;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Service Registry — CRUD operations for registered services.
  *
@@ -51,8 +49,7 @@ class registry
      * @return \stdClass The service record.
      * @throws \dml_exception If not found.
      */
-    public static function get_service_by_id(int $id): \stdClass
-    {
+    public static function get_service_by_id(int $id): \stdClass {
         global $DB;
         return $DB->get_record(self::TABLE, ['id' => $id], '*', MUST_EXIST);
     }
@@ -62,8 +59,7 @@ class registry
      *
      * @return \stdClass[] Array of service records.
      */
-    public static function get_all_services(): array
-    {
+    public static function get_all_services(): array {
         global $DB;
         return $DB->get_records(self::TABLE, null, 'name ASC');
     }
@@ -76,8 +72,7 @@ class registry
      * @return int The new service ID.
      * @throws \dml_exception
      */
-    public static function create_service(\stdClass $data): int
-    {
+    public static function create_service(\stdClass $data): int {
         global $DB;
 
         $now = time();
@@ -117,8 +112,7 @@ class registry
      * @return bool True on success.
      * @throws \dml_exception
      */
-    public static function update_service(int $id, \stdClass $data): bool
-    {
+    public static function update_service(int $id, \stdClass $data): bool {
         global $DB;
 
         $record = self::get_service_by_id($id);
@@ -171,8 +165,7 @@ class registry
      * @param int $id The service ID.
      * @return bool True on success.
      */
-    public static function delete_service(int $id): bool
-    {
+    public static function delete_service(int $id): bool {
         global $DB;
         $DB->delete_records('local_integrationhub_cb', ['serviceid' => $id]);
         $DB->delete_records('local_integrationhub_log', ['serviceid' => $id]);

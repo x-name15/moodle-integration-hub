@@ -20,3 +20,13 @@ phpcbf.phar
 405(1).txt
 fix_lint.php
 .gitignore
+sort_lang.php
+sort_lang.py
+fix_braces.php
+sort_one.py
+fix_braces.py
+fix_all.py
+error_ci(1).txt
+error_ci.txt
+/moodle_cs
+CodeSniffer.conf

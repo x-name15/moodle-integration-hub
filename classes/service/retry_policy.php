@@ -16,8 +16,6 @@
 
 namespace local_integrationhub\service;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Retry Policy — configurable retry logic with exponential backoff.
  *
@@ -50,12 +48,11 @@ class retry_policy
      * @param \stdClass $service A service record from the database.
      * @return self
      */
-    public static function from_service(\stdClass $service): self
-    {
+    public static function from_service(\stdClass $service): self {
         return new self(
             (int)($service->max_retries ?? 3),
             (int)($service->retry_backoff ?? 1)
-            );
+        );
     }
 
     /**
@@ -96,8 +93,7 @@ class retry_policy
      *
      * @return int
      */
-    public function get_total_attempts(): int
-    {
+    public function get_total_attempts(): int {
         return $this->maxretries + 1;
     }
 }

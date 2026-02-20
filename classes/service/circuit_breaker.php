@@ -16,8 +16,6 @@
 
 namespace local_integrationhub\service;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Circuit Breaker — prevents cascading failures by short-circuiting requests
  * to services that are consistently failing.
@@ -71,8 +69,7 @@ class circuit_breaker
      * @param \stdClass $service A service record from the database.
      * @return self
      */
-    public static function from_service(\stdClass $service): self
-    {
+    public static function from_service(\stdClass $service): self {
         return new self(
             (int)$service->id,
             (int)($service->cb_failure_threshold ?? 5),
@@ -88,8 +85,7 @@ class circuit_breaker
      *
      * @return bool True if the request should proceed, false if circuit is open.
      */
-    public function is_available(): bool
-    {
+    public function is_available(): bool {
         $state = $this->get_state();
 
         if ($state->state === self::STATE_CLOSED) {
@@ -109,8 +105,7 @@ class circuit_breaker
     /**
      * Record a successful request. Resets the circuit to CLOSED.
      */
-    public function record_success(): void
-    {
+    public function record_success(): void {
         global $DB;
 
         $state = $this->get_state();
@@ -125,8 +120,7 @@ class circuit_breaker
      * Record a failed request. Increments failure count and opens
      * the circuit if the threshold is reached.
      */
-    public function record_failure(): void
-    {
+    public function record_failure(): void {
         global $DB;
 
         $state = $this->get_state();
@@ -146,8 +140,7 @@ class circuit_breaker
      *
      * @return \stdClass The circuit record.
      */
-    public function get_state(): \stdClass
-    {
+    public function get_state(): \stdClass {
         global $DB;
 
         $state = $DB->get_record(self::TABLE, ['serviceid' => $this->serviceid]);
@@ -170,16 +163,14 @@ class circuit_breaker
      *
      * @return string
      */
-    public function get_state_label(): string
-    {
+    public function get_state_label(): string {
         return strtoupper($this->get_state()->state);
     }
 
     /**
      * Manually reset the circuit to CLOSED state.
      */
-    public function reset(): void
-    {
+    public function reset(): void {
         global $DB;
 
         $state = $this->get_state();
@@ -196,8 +187,7 @@ class circuit_breaker
      *
      * @param string $newstate One of STATE_CLOSED, STATE_OPEN, STATE_HALFOPEN.
      */
-    private function set_state(string $newstate): void
-    {
+    private function set_state(string $newstate): void {
         global $DB;
 
         $state = $this->get_state();

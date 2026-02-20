@@ -16,8 +16,6 @@
 
 namespace local_integrationhub\event;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Event fired when an external service sends data back into Moodle via MIH.
  *

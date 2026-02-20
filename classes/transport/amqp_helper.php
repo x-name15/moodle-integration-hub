@@ -16,8 +16,6 @@
 
 namespace local_integrationhub\transport;
 
-defined('MOODLE_INTERNAL') || die();
-
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Connection\AMQPSSLConnection;
 
@@ -40,8 +38,7 @@ class amqp_helper
      * @return AMQPStreamConnection
      * @throws \Exception If URL is invalid or connection fails.
      */
-    public static function create_connection(string $url, int $timeout = 5): AMQPStreamConnection
-    {
+    public static function create_connection(string $url, int $timeout = 5): AMQPStreamConnection {
         $parsed = parse_url($url);
         if (!$parsed || !isset($parsed['host'])) {
             throw new \Exception('Invalid AMQP connection string: ' . $url);
@@ -76,8 +73,8 @@ class amqp_helper
                 $pass,
                 $vhost,
                 $ssloptions,
-            ['connection_timeout' => $timeout, 'read_write_timeout' => $timeout]
-                );
+                ['connection_timeout' => $timeout, 'read_write_timeout' => $timeout]
+            );
         }
 
         return new AMQPStreamConnection(
@@ -92,7 +89,7 @@ class amqp_helper
             'en_US',
             $timeout,
             $timeout
-            );
+        );
     }
 
     /**
@@ -101,8 +98,7 @@ class amqp_helper
      * @param \PhpAmqpLib\Channel\AMQPChannel $channel
      * @param string $queue
      */
-    public static function ensure_queue($channel, string $queue): void
-    {
+    public static function ensure_queue($channel, string $queue): void {
         // durable: true, exclusive: false, auto_delete: false
         $channel->queue_declare($queue, false, true, false, false);
     }

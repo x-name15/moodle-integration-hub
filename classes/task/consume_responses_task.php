@@ -16,8 +16,6 @@
 
 namespace local_integrationhub\task;
 
-defined('MOODLE_INTERNAL') || die();
-
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use local_integrationhub\webhook_handler;
 use local_integrationhub\service\registry as service_registry;
@@ -44,23 +42,21 @@ class consume_responses_task extends \core\task\scheduled_task
      *
      * @return string
      */
-    public function get_name()
-    {
+    public function get_name() {
         return get_string('task_consume_responses', 'local_integrationhub');
     }
 
     /**
      * Execute the task.
      */
-    public function execute()
-    {
+    public function execute() {
         global $DB;
 
         // Get all AMQP services with a response_queue configured.
         $services = $DB->get_records_select(
             'local_integrationhub_svc',
             "type = ? AND response_queue IS NOT NULL AND response_queue != '' AND enabled = 1",
-        ['amqp']
+            ['amqp']
         );
 
         if (empty($services)) {
@@ -78,8 +74,7 @@ class consume_responses_task extends \core\task\scheduled_task
      *
      * @param \stdClass $service The service record.
      */
-    private function consume_from_service(\stdClass $service): void
-    {
+    private function consume_from_service(\stdClass $service): void {
         $queue = trim($service->response_queue);
         mtrace("  MIH Consumer [{$service->name}]: Consuming from queue '{$queue}'...");
 
@@ -115,8 +110,7 @@ class consume_responses_task extends \core\task\scheduled_task
                 if ($result['success']) {
                     $channel->basic_ack($msg->getDeliveryTag());
                     $consumed++;
-                }
-                else {
+                } else {
                     // Negative-ack with requeue so the message isn't lost.
                     $channel->basic_nack($msg->getDeliveryTag(), false, true);
                     mtrace("    Error processing message: " . $result['error']);
@@ -128,8 +122,7 @@ class consume_responses_task extends \core\task\scheduled_task
             $connection->close();
 
             mtrace("    Consumed {$consumed} message(s).");
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             mtrace("  MIH Consumer [{$service->name}]: Error: " . $e->getMessage());
         }
     }

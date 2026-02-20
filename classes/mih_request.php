@@ -16,8 +16,6 @@
 
 namespace local_integrationhub;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Fluent Request Builder for Integration Hub.
  *
@@ -56,8 +54,7 @@ class mih_request
      * @param string $path E.g. '/api/users'
      * @return self
      */
-    public function to(string $path): self
-    {
+    public function to(string $path): self {
         $this->path = $path;
         return $this;
     }
@@ -68,8 +65,7 @@ class mih_request
      * @param array $data Data array.
      * @return self
      */
-    public function with(array $data): self
-    {
+    public function with(array $data): self {
         $this->data = $data;
         return $this;
     }
@@ -80,8 +76,7 @@ class mih_request
      * @param string $method E.g. 'GET', 'PUT'.
      * @return self
      */
-    public function method(string $method): self
-    {
+    public function method(string $method): self {
         $this->method = strtoupper($method);
         return $this;
     }
@@ -92,8 +87,7 @@ class mih_request
      * @return mih_response
      * @throws \moodle_exception
      */
-    public function dispatch(): mih_response
-    {
+    public function dispatch(): mih_response {
         // Use the internal method of the MIH singleton.
         return mih::instance()->execute_request(
             $this->service,

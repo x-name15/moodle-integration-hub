@@ -16,8 +16,6 @@
 
 namespace local_integrationhub\rule;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Registry for managing event rules.
  *
@@ -136,10 +134,13 @@ class registry
         if (class_exists("\\{$classname}")) {
             try {
                 $fullclass = "\\{$classname}";
-                if (is_a($fullclass, \core\event\base::class, true)) {
+                if (is_a($fullclass, \core\event\base::class , true)) {
                     return $fullclass::get_name();
                 }
-            } catch (\Exception $e) {
+            }
+            catch (\Exception $e) {
+                // Ignore exceptions when checking classes.
+                $ignored = $e;
             }
         }
         $parts = explode('\\', $classname);
@@ -161,7 +162,7 @@ class registry
         $list = [];
 
         foreach (array_keys($events) as $event) {
-            if (is_a($event, \core\event\base::class, true)) {
+            if (is_a($event, \core\event\base::class , true)) {
                 $reflection = new \ReflectionClass($event);
                 if (!$reflection->isAbstract()) {
                     $list["\\{$event}"] = self::get_event_display_name($event);

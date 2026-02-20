@@ -47,8 +47,7 @@ class amqp implements contract
      * @param string $method     (Optional) Action method.
      * @return array             Response array.
      */
-    public function execute(\stdClass $service, string $endpoint, array $payload, string $method = ''): array
-    {
+    public function execute(\stdClass $service, string $endpoint, array $payload, string $method = ''): array {
         $starttime = microtime(true);
         $attempts = 1;
 
@@ -96,7 +95,7 @@ class amqp implements contract
             $msgbody = json_encode($payload);
             $msg = new AMQPMessage($msgbody, [
                 'delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT,
-                'content_type' => 'application/json'
+                'content_type' => 'application/json',
             ]);
 
             $channel->basic_publish($msg, $exchange, $routingkey);

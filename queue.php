@@ -75,7 +75,7 @@ if ($canmanage && !empty($action) && confirm_sesskey()) {
                 $task = new \local_integrationhub\task\dispatch_event_task();
                 $task->set_custom_data([
                     'ruleid' => $rule->id,
-                    'eventdata' => json_decode($dlqitem->payload, true)
+                    'eventdata' => json_decode($dlqitem->payload, true),
                 ]);
                 \core\task\manager::queue_adhoc_task($task);
                 $DB->delete_records('local_integrationhub_dlq', ['id' => $dlqid]);
@@ -183,7 +183,8 @@ if (empty($tasks)) {
 
         // Failures badge.
         $failclass = $task->faildelay > 0 ? 'badge bg-danger' : 'badge bg-secondary';
-        echo html_writer::tag('td', html_writer::tag('span', $task->faildelay > 0 ? get_string('failed', 'local_integrationhub') : get_string('pending', 'local_integrationhub'), ['class' => $failclass]));
+        $status = $task->faildelay > 0 ? get_string('failed', 'local_integrationhub') : get_string('pending', 'local_integrationhub');
+        echo html_writer::tag('td', html_writer::tag('span', $status, ['class' => $failclass]));
 
         // Next Run.
         $nextrun = $task->nextruntime;
@@ -215,7 +216,7 @@ if (empty($tasks)) {
                 'type' => 'button',
                 'title' => get_string('view_payload', 'local_integrationhub'),
                 'data-payload' => $payloadview, // s() escapes HTML entities safely
-                'data-title' => get_string('payload_source', 'local_integrationhub') . ': ' . s($task->eventname)
+                'data-title' => get_string('payload_source', 'local_integrationhub') . ': ' . s($task->eventname),
             ]);
 
             if ($task->faildelay > 0 || $task->nextruntime < time()) {
@@ -223,18 +224,18 @@ if (empty($tasks)) {
                 $retryurl = new moodle_url($PAGE->url, [
                     'action' => 'retry',
                     'taskid' => $task->id,
-                    'sesskey' => sesskey()
+                    'sesskey' => sesskey(),
                 ]);
                 echo html_writer::link($retryurl, '<i class="fa fa-refresh"></i>', [
                     'class' => 'btn btn-sm btn-primary me-1',
-                    'title' => get_string('retry', 'local_integrationhub')
+                    'title' => get_string('retry', 'local_integrationhub'),
                 ]);
             }
             // Delete button (always visible).
             $deleteurl = new moodle_url($PAGE->url, [
                 'action' => 'deletetask',
                 'taskid' => $task->id,
-                'sesskey' => sesskey()
+                'sesskey' => sesskey(),
             ]);
             echo html_writer::link($deleteurl, '<i class="fa fa-trash"></i>', [
                 'class' => 'btn btn-sm btn-outline-danger',
@@ -286,20 +287,20 @@ if (empty($dlqitems)) {
                 'type' => 'button',
                 'title' => get_string('view_payload', 'local_integrationhub'),
                 'data-payload' => s($payloadview),
-                'data-title' => get_string('payload_final', 'local_integrationhub') . ': ' . s($item->eventname)
+                'data-title' => get_string('payload_final', 'local_integrationhub') . ': ' . s($item->eventname),
             ]);
 
             $replayurl = new moodle_url($PAGE->url, ['action' => 'replay_dlq', 'dlqid' => $item->id, 'sesskey' => sesskey()]);
             echo html_writer::link($replayurl, '<i class="fa fa-play"></i>', [
                 'class' => 'btn btn-sm btn-outline-success me-1',
-                'title' => get_string('replay', 'local_integrationhub')
+                'title' => get_string('replay', 'local_integrationhub'),
             ]);
 
             $deleteurl = new moodle_url($PAGE->url, ['action' => 'delete_dlq', 'dlqid' => $item->id, 'sesskey' => sesskey()]);
             echo html_writer::link($deleteurl, '<i class="fa fa-trash"></i>', [
                 'class' => 'btn btn-sm btn-outline-danger',
                 'title' => get_string('delete'),
-                'onclick' => "return confirm('" . addslashes_js(get_string('dlq_delete_confirm', 'local_integrationhub')) . "');"
+                'onclick' => "return confirm('" . addslashes_js(get_string('dlq_delete_confirm', 'local_integrationhub')) . "');",
             ]);
             echo '</td>';
         }

@@ -1,8 +1,20 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace local_integrationhub\task;
-
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Helper class to manage the Integration Hub task queue.
@@ -24,7 +36,7 @@ class queue_manager
         // Fetch adhoc tasks for our specific class.
         $tasks = $DB->get_records(
             'task_adhoc',
-        ['classname' => '\local_integrationhub\task\dispatch_event_task'],
+            ['classname' => '\local_integrationhub\task\dispatch_event_task'],
             'nextruntime ASC'
         );
 
@@ -78,8 +90,7 @@ class queue_manager
      * @param int $taskid The adhoc task ID.
      * @return bool True on success.
      */
-    public static function delete_task(int $taskid): bool
-    {
+    public static function delete_task(int $taskid): bool {
         global $DB;
         return $DB->delete_records('task_adhoc', [
             'id' => $taskid,
@@ -92,8 +103,7 @@ class queue_manager
      *
      * @return int Number of tasks purged.
      */
-    public static function purge_orphan_tasks(): int
-    {
+    public static function purge_orphan_tasks(): int {
         global $DB;
 
         $tasks = $DB->get_records('task_adhoc', [

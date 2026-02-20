@@ -62,13 +62,11 @@ $toreplay = [];
 if ($options['all']) {
     $toreplay = $DB->get_records('local_integrationhub_dlq');
     echo "Found " . count($toreplay) . " items in DLQ.\n";
-}
-else {
+} else {
     $record = $DB->get_record('local_integrationhub_dlq', ['id' => $options['id']]);
     if ($record) {
         $toreplay[] = $record;
-    }
-    else {
+    } else {
         cli_error("DLQ Entry {$options['id']} not found.");
     }
 }
@@ -116,12 +114,10 @@ foreach ($toreplay as $item) {
         if ($response->is_ok()) {
             echo "  [SUCCESS] Replayed successfully.\n";
             $DB->delete_records('local_integrationhub_dlq', ['id' => $item->id]);
-        }
-        else {
+        } else {
             echo "  [FAIL] MIH error: {$response->error}\n";
         }
-    }
-    catch (\Exception $e) {
+    } catch (\Exception $e) {
         echo "  [ERROR] " . $e->getMessage() . "\n";
     }
 }

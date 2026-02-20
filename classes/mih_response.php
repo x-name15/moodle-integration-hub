@@ -16,8 +16,6 @@
 
 namespace local_integrationhub;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * MIH Response — immutable value object wrapping the result of a MIH request.
  *
@@ -62,7 +60,7 @@ class mih_response
         ?string $error,
         int $latencyms,
         int $attempts
-        ) {
+    ) {
         $this->success = $success;
         $this->httpstatus = $httpstatus;
         $this->body = $body;
@@ -94,8 +92,7 @@ class mih_response
      *
      * @return bool
      */
-    public function is_ok(): bool
-    {
+    public function is_ok(): bool {
         return $this->success;
     }
 }

@@ -16,8 +16,6 @@
 
 namespace local_integrationhub;
 
-defined('MOODLE_INTERNAL') || die();
-
 use local_integrationhub\service\registry as service_registry;
 use local_integrationhub\service\circuit_breaker;
 use local_integrationhub\service\retry_policy;
@@ -52,8 +50,7 @@ class mih
      *
      * @return self
      */
-    public static function instance(): self
-    {
+    public static function instance(): self {
         if (self::$instance === null) {
             self::$instance = new self();
         }
@@ -74,8 +71,7 @@ class mih
         string $endpoint = '/',
         array $payload = [],
         string $method = 'POST'
-        ): mih_response
-    {
+    ): mih_response {
         return self::instance()->execute_request($servicename, $endpoint, $payload, $method);
     }
 
@@ -85,8 +81,7 @@ class mih
      * @param string $service Service slug.
      * @return mih_request
      */
-    public static function send(string $service): mih_request
-    {
+    public static function send(string $service): mih_request {
         return new mih_request($service);
     }
 
@@ -105,8 +100,7 @@ class mih
         string $endpoint = '/',
         array $payload = [],
         string $method = ''
-        ): mih_response
-    {
+    ): mih_response {
 
         // 1. Resolve the service from the registry.
         $service = service_registry::get_service($servicename);
@@ -183,8 +177,7 @@ class mih
      * @param string $type The service type ('rest', 'amqp').
      * @return \local_integrationhub\transport\contract
      */
-    private function get_transport_driver(string $type): \local_integrationhub\transport\contract
-    {
+    private function get_transport_driver(string $type): \local_integrationhub\transport\contract {
         switch ($type) {
             case 'amqp':
                 return new \local_integrationhub\transport\amqp();
@@ -217,8 +210,7 @@ class mih
         int $attempts,
         bool $success,
         ?string $error
-        ): void
-    {
+    ): void {
         global $DB;
 
         $log = new \stdClass();
@@ -248,7 +240,7 @@ class mih
                     "SELECT timecreated FROM {" . self::LOG_TABLE . "}
                      ORDER BY timecreated DESC
                      LIMIT 1 OFFSET ?",
-                [$maxlogs - 1]
+                    [$maxlogs - 1]
                 );
                 if ($cutoff) {
                     $DB->delete_records_select(self::LOG_TABLE, 'timecreated < ?', [$cutoff]);

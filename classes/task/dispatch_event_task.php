@@ -16,8 +16,6 @@
 
 namespace local_integrationhub\task;
 
-defined('MOODLE_INTERNAL') || die();
-
 use local_integrationhub\mih;
 use local_integrationhub\service\registry as service_registry;
 

@@ -28,8 +28,8 @@ require_once($CFG->libdir . '/clilib.php');
 
 // Define expected options and their defaults
 [$options, $unrecognized] = cli_get_params(
-['name' => '', 'help' => false],
-['h' => 'help']
+    ['name' => '', 'help' => false],
+    ['h' => 'help']
 );
 
 if ($options['help'] || !$options['name']) {

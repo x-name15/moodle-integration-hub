@@ -16,8 +16,6 @@
 
 namespace local_integrationhub\transport;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Trait for common transport utilities.
  *
@@ -36,8 +34,7 @@ trait transport_utils
      * @param int   $httpcode Optional HTTP status code (or equivalent).
      * @return array
      */
-    protected function success_result($response, float $starttime, int $attempts = 1, int $httpcode = 200): array
-    {
+    protected function success_result($response, float $starttime, int $attempts = 1, int $httpcode = 200): array {
         return [
             'success' => true,
             'response' => $response,
@@ -57,8 +54,7 @@ trait transport_utils
      * @param int    $httpcode Optional HTTP status code (or equivalent).
      * @return array
      */
-    protected function error_result(string $error, float $starttime, int $attempts = 1, int $httpcode = 0): array
-    {
+    protected function error_result(string $error, float $starttime, int $attempts = 1, int $httpcode = 0): array {
         return [
             'success' => false,
             'response' => null,

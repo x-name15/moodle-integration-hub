@@ -16,8 +16,6 @@
 
 namespace local_integrationhub\transport;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * HTTP Transport Driver.
  *
@@ -32,10 +30,15 @@ class http implements contract
     use transport_utils;
 
     /**
-     * @inheritDoc
+     * Execute the HTTP request.
+     *
+     * @param \stdClass $service The service configuration.
+     * @param string $endpoint The endpoint path.
+     * @param array $payload The request payload data.
+     * @param string $method The HTTP method.
+     * @return array Processed response array.
      */
-    public function execute(\stdClass $service, string $endpoint, array $payload, string $method = 'POST'): array
-    {
+    public function execute(\stdClass $service, string $endpoint, array $payload, string $method = 'POST'): array {
         global $CFG;
         require_once($CFG->libdir . '/filelib.php');
 

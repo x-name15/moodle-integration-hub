@@ -46,7 +46,7 @@ if ($action === 'preview_payload') {
         'courseid' => 10,
         'contextid' => 1,
         'timecreated' => time(),
-        'ip' => '127.0.0.1'
+        'ip' => '127.0.0.1',
     ];
 
     $json = $template;
@@ -63,13 +63,13 @@ if ($action === 'preview_payload') {
         echo json_encode([
             'success' => false,
             'error' => json_last_error_msg(),
-            'raw' => $json
+            'raw' => $json,
         ]);
     } else {
         echo json_encode([
             'success' => true,
             'payload' => $decoded,
-            'raw' => $json
+            'raw' => $json,
         ]);
     }
     exit;
