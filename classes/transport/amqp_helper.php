@@ -1,4 +1,20 @@
 <?php
+
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 namespace local_integrationhub\transport;
 
 defined('MOODLE_INTERNAL') || die();
@@ -17,7 +33,6 @@ use PhpAmqpLib\Connection\AMQPSSLConnection;
  */
 class amqp_helper
 {
-
     /**
      * Parse an AMQP URL and create a connection.
      *
@@ -40,7 +55,7 @@ class amqp_helper
         $pass = $parsed['pass'] ?? 'guest';
         $path = isset($parsed['path']) ? $parsed['path'] : '/';
 
-        // Handle path extraction for vhost
+        // Handle path extraction for vhost.
         if ($path !== '/' && strpos($path, '/') === 0) {
             $path = substr($path, 1);
         }
@@ -56,16 +71,28 @@ class amqp_helper
                 'verify_peer_name' => false,
             ];
             return new AMQPSSLConnection(
-                $host, $port, $user, $pass, $vhost,
+                $host,
+                $port,
+                $user,
+                $pass,
+                $vhost,
                 $ssloptions,
             ['connection_timeout' => $timeout, 'read_write_timeout' => $timeout]
                 );
         }
 
         return new AMQPStreamConnection(
-            $host, $port, $user, $pass, $vhost,
-            false, 'AMQPLAIN', null, 'en_US',
-            $timeout, $timeout
+            $host,
+            $port,
+            $user,
+            $pass,
+            $vhost,
+            false,
+            'AMQPLAIN',
+            null,
+            'en_US',
+            $timeout,
+            $timeout
             );
     }
 

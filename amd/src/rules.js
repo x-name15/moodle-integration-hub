@@ -4,14 +4,14 @@ define(
         'core/ajax',
         'core/notification'
     ],
-    function(
+    function (
         $,
         Ajax,
         Notification
     ) {
 
         return {
-            init: function(serviceTypes) {
+            init: function (serviceTypes) {
 
                 try {
                     var formContainer = $('#ih-rule-form');
@@ -27,7 +27,7 @@ define(
                         $('#ih-method-container');
 
                     var updateEndpointLabel =
-                        function() {
+                        function () {
 
                             var svcId =
                                 serviceField.val();
@@ -37,7 +37,6 @@ define(
                                 'rest';
 
                             if (type === 'amqp') {
-
                                 endpointLabel.text(
                                     'Queue Name / Routing Key'
                                 );
@@ -50,9 +49,7 @@ define(
                                 methodContainer.addClass(
                                     'd-none'
                                 );
-
                             } else if (type === 'soap') {
-
                                 endpointLabel.text(
                                     'SOAP Action / Method'
                                 );
@@ -65,9 +62,7 @@ define(
                                 methodContainer.addClass(
                                     'd-none'
                                 );
-
                             } else {
-
                                 endpointLabel.text(
                                     'Endpoint Path'
                                 );
@@ -93,7 +88,7 @@ define(
                     }
 
                     if (btnAdd.length) {
-                        btnAdd.on('click', function() {
+                        btnAdd.on('click', function () {
 
                             $('#ih-ruleid').val('0');
                             $('#ih-form')[0].reset();
@@ -107,7 +102,7 @@ define(
                     }
 
                     if (btnCancel.length) {
-                        btnCancel.on('click', function() {
+                        btnCancel.on('click', function () {
 
                             formContainer.addClass(
                                 'd-none'
@@ -120,7 +115,7 @@ define(
                     if (btnPreview.length) {
                         btnPreview.on(
                             'click',
-                            function(e) {
+                            function (e) {
 
                                 e.preventDefault();
 
@@ -144,7 +139,6 @@ define(
                             }
                         );
                     }
-
                 } catch (e) {
                     Notification.exception(e);
                 }

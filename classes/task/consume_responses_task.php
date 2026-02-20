@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -34,8 +35,8 @@ use local_integrationhub\transport\amqp_helper;
  * @copyright  2026 Integration Hub Contributors
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class consume_responses_task extends \core\task\scheduled_task {
-
+class consume_responses_task extends \core\task\scheduled_task
+{
     /** @var int Maximum messages to consume per service per run. */
     const MAX_MESSAGES_PER_RUN = 50;
 
@@ -44,14 +45,16 @@ class consume_responses_task extends \core\task\scheduled_task {
      *
      * @return string
      */
-    public function get_name() {
+    public function get_name()
+    {
         return get_string('task_consume_responses', 'local_integrationhub');
     }
 
     /**
      * Execute the task.
      */
-    public function execute() {
+    public function execute()
+    {
         global $DB;
 
         // Get all AMQP services with a response_queue configured.
@@ -76,7 +79,8 @@ class consume_responses_task extends \core\task\scheduled_task {
      *
      * @param \stdClass $service The service record.
      */
-    private function consume_from_service(\stdClass $service): void {
+    private function consume_from_service(\stdClass $service): void
+    {
         $queue = trim($service->response_queue);
         mtrace("  MIH Consumer [{$service->name}]: Consuming from queue '{$queue}'...");
 
@@ -124,7 +128,6 @@ class consume_responses_task extends \core\task\scheduled_task {
             $connection->close();
 
             mtrace("    Consumed {$consumed} message(s).");
-
         } catch (\Exception $e) {
             mtrace("  MIH Consumer [{$service->name}]: Error: " . $e->getMessage());
         }

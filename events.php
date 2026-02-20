@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -13,6 +14,14 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * Sent events log view for the Integration Hub plugin.
+ *
+ * @package    local_integrationhub
+ * @copyright  2026 Integration Hub Contributors
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
 require_once(__DIR__ . '/../../config.php');
 
@@ -129,13 +138,15 @@ else {
         $text = $log->http_status;
         if ($log->success) {
             $statusclass = 'text-success fw-bold';
-            if (!$text && $log->http_method === 'AMQP')
+            if (!$text && $log->http_method === 'AMQP') {
                 $text = 'OK';
+            }
         }
         else {
             $statusclass = 'text-danger fw-bold';
-            if (!$text)
+            if (!$text) {
                 $text = 'ERR';
+            }
             // Show error in tooltip?
             if ($log->error_message) {
                 $text .= ' <i class="fa fa-info-circle" title="' . s($log->error_message) . '"></i>';

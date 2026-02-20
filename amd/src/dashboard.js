@@ -198,7 +198,6 @@ define(
                             syncAmqpUrl();
                         }
                     }
-
                 } catch (e) {
                     Notification.exception(e);
                 }
@@ -245,7 +244,6 @@ define(
 
                         if (!data.labels ||
                             data.labels.length === 0) {
-
                             ctxLatency.font =
                                 '14px sans-serif';
 
@@ -284,7 +282,6 @@ define(
                             });
                         }
                     }
-
                 } catch (e) {
                     Notification.exception(e);
                 }

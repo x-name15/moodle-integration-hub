@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -38,7 +39,6 @@ namespace local_integrationhub\privacy;
  */
 class provider implements \core_privacy\local\metadata\null_provider
 {
-
     /**
      * Get the language string identifier with a description of what data this plugin stores.
      *

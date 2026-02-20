@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -30,7 +31,6 @@ use local_integrationhub\service\registry as service_registry;
  */
 class dispatch_event_task extends \core\task\adhoc_task
 {
-
     /**
      * Execute the task.
      */
@@ -113,8 +113,8 @@ class dispatch_event_task extends \core\task\adhoc_task
             $response = $mih->execute_request($service->name, $endpoint, $payload, $method);
 
             if ($response->is_ok()) {
-                $status_str = $response->httpstatus ? "HTTP {$response->httpstatus}" : "OK";
-                mtrace("Success: {$status_str}");
+                $statusstr = $response->httpstatus ? "HTTP {$response->httpstatus}" : "OK";
+                mtrace("Success: {$statusstr}");
             }
             else {
                 mtrace("Failed: HTTP {$response->httpstatus} - {$response->error}");

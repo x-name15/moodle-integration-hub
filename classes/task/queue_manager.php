@@ -1,4 +1,5 @@
 <?php
+
 namespace local_integrationhub\task;
 
 defined('MOODLE_INTERNAL') || die();
@@ -10,23 +11,28 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright  2026 Integration Hub Contributors
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class queue_manager {
-
+class queue_manager
+{
     /**
      * Get all pending dispatch_event_tasks.
      *
      * @return array List of task objects with expanded custom data.
      */
-    public static function get_pending_tasks() {
+    public static function get_pending_tasks()
+    {
         global $DB;
 
         // Fetch adhoc tasks for our specific class.
-        $tasks = $DB->get_records('task_adhoc', ['classname' => '\local_integrationhub\task\dispatch_event_task'], 'nextruntime ASC');
+        $tasks = $DB->get_records(
+            'task_adhoc',
+        ['classname' => '\local_integrationhub\task\dispatch_event_task'],
+            'nextruntime ASC'
+        );
 
         $results = [];
         foreach ($tasks as $task) {
             $data = json_decode($task->customdata);
-            
+
             // Enrich with rule/service info if available.
             $rule = $DB->get_record('local_integrationhub_rules', ['id' => $data->ruleid ?? 0]);
             $service = $rule ? $DB->get_record('local_integrationhub_svc', ['id' => $rule->serviceid]) : null;
@@ -34,7 +40,7 @@ class queue_manager {
             $task->eventname = $rule->eventname ?? 'Unknown (Rule deleted)';
             $task->servicename = $service->name ?? 'Unknown';
             $task->ruleid = $data->ruleid ?? 0;
-            
+
             $results[] = $task;
         }
 
@@ -43,14 +49,18 @@ class queue_manager {
 
     /**
      * Force a retry of a failed/pending task by resetting its faildelay and nextruntime.
-     * 
+     *
      * @param int $taskid The adhoc task ID.
      * @return bool True on success.
      */
-    public static function retry_task($taskid) {
+    public static function retry_task($taskid)
+    {
         global $DB;
 
-        $task = $DB->get_record('task_adhoc', ['id' => $taskid, 'classname' => '\local_integrationhub\task\dispatch_event_task']);
+        $task = $DB->get_record('task_adhoc', [
+            'id' => $taskid,
+            'classname' => '\local_integrationhub\task\dispatch_event_task',
+        ]);
 
         if (!$task) {
             return false;
@@ -60,7 +70,7 @@ class queue_manager {
         $update->id = $taskid;
         $update->faildelay = 0;
         $update->nextruntime = time() - 1; // Run immediately.
-        
+
         return $DB->update_record('task_adhoc', $update);
     }
 
@@ -70,7 +80,8 @@ class queue_manager {
      * @param int $taskid The adhoc task ID.
      * @return bool True on success.
      */
-    public static function delete_task(int $taskid): bool {
+    public static function delete_task(int $taskid): bool
+    {
         global $DB;
         return $DB->delete_records('task_adhoc', [
             'id' => $taskid,
@@ -83,7 +94,8 @@ class queue_manager {
      *
      * @return int Number of tasks purged.
      */
-    public static function purge_orphan_tasks(): int {
+    public static function purge_orphan_tasks(): int
+    {
         global $DB;
 
         $tasks = $DB->get_records('task_adhoc', [
@@ -98,11 +110,13 @@ class queue_manager {
             $purge = false;
             if ($ruleid <= 0) {
                 $purge = true;
-            } else {
+            }
+            else {
                 $rule = $DB->get_record('local_integrationhub_rules', ['id' => $ruleid]);
                 if (!$rule) {
                     $purge = true;
-                } else if (!$DB->record_exists('local_integrationhub_svc', ['id' => $rule->serviceid])) {
+                }
+                elseif (!$DB->record_exists('local_integrationhub_svc', ['id' => $rule->serviceid])) {
                     // Rule exists but service is gone.
                     $purge = true;
                 }

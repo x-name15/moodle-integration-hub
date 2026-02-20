@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -50,8 +51,7 @@ if ($canmanage && $action === 'save' && confirm_sesskey()) {
     if ($ruleid > 0) {
         rules_registry::update_rule($ruleid, $data);
         \core\notification::success(get_string('ruleupdated', 'local_integrationhub'));
-    }
-    else {
+    } else {
         rules_registry::create_rule($data);
         \core\notification::success(get_string('rulecreated', 'local_integrationhub'));
     }
@@ -163,8 +163,9 @@ echo html_writer::start_tag('select', ['name' => 'serviceid', 'id' => 'ih-servic
 echo '<option value="">' . get_string('selectservice', 'local_integrationhub') . '</option>';
 $currentsvc = $editrule->serviceid ?? 0;
 foreach ($services as $svc) {
-    if (!$svc->enabled)
+    if (!$svc->enabled) {
         continue;
+    }
     $sel = ($svc->id == $currentsvc) ? 'selected' : '';
     echo "<option value='{$svc->id}' {$sel}>" . s($svc->name) . "</option>";
 }
@@ -249,8 +250,7 @@ echo html_writer::tag('h4', get_string('rules', 'local_integrationhub'), ['class
 
 if (empty($rules)) {
     echo html_writer::div(get_string('norules', 'local_integrationhub'), 'alert alert-info');
-}
-else {
+} else {
     echo html_writer::start_tag('div', ['class' => 'table-responsive']);
     // Force text-dark to avoid theme white-text issues
     echo html_writer::start_tag('table', ['class' => 'table table-striped table-hover', 'style' => 'color: #212529 !important;']);
@@ -260,8 +260,9 @@ else {
     echo '<th>' . get_string('col_method', 'local_integrationhub') . '</th>';
     echo '<th>' . get_string('col_endpoint', 'local_integrationhub') . '</th>';
     echo '<th>' . get_string('col_enabled', 'local_integrationhub') . '</th>';
-    if ($canmanage)
+    if ($canmanage) {
         echo '<th>' . get_string('col_actions', 'local_integrationhub') . '</th>';
+    }
     echo '</tr></thead>';
     echo '<tbody>';
 
@@ -276,24 +277,25 @@ else {
         $svc = $services[$rule->serviceid] ?? null;
         if ($svc && isset($svc->type) && $svc->type === 'amqp') {
             echo '<td><span class="badge bg-warning text-dark">AMQP</span></td>';
-        }
-        elseif ($svc && isset($svc->type) && $svc->type === 'soap') {
+        } elseif ($svc && isset($svc->type) && $svc->type === 'soap') {
             echo '<td><span class="badge bg-secondary">SOAP</span></td>';
-        }
-        else {
+        } else {
             // Default to REST method (blue).
             $method = $rule->http_method ?: 'POST';
             $badgeclass = 'bg-info text-dark';
-            if ($method === 'DELETE')
+            if ($method === 'DELETE') {
                 $badgeclass = 'bg-danger';
-            if ($method === 'GET')
+            }
+            if ($method === 'GET') {
                 $badgeclass = 'bg-success';
-            if ($method === 'PUT')
+            }
+            if ($method === 'PUT') {
                 $badgeclass = 'bg-warning text-dark';
+            }
             echo '<td><span class="badge ' . $badgeclass . '">' . s($method) . '</span></td>';
         }
 
-        echo '<td>' . ($rule->endpoint ?html_writer::tag('code', s($rule->endpoint)) : '<span class="text-muted">Default</span>') . '</td>';
+        echo '<td>' . ($rule->endpoint ? html_writer::tag('code', s($rule->endpoint)) : '<span class="text-muted">Default</span>') . '</td>';
 
         $statusclass = $rule->enabled ? 'badge bg-success' : 'badge bg-secondary';
         $statuslabel = $rule->enabled ? get_string('status_active', 'local_integrationhub') : get_string('status_disabled', 'local_integrationhub');

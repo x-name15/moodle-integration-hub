@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -18,7 +19,7 @@
  * Capability definitions for Integration Hub.
  *
  * @package    local_integrationhub
- * @copyright  2026 Integration Hub 
+ * @copyright  2026 Integration Hub
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 

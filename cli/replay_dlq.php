@@ -1,4 +1,28 @@
 <?php
+
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * CLI script to replay items from the Dead Letter Queue.
+ *
+ * @package    local_integrationhub
+ * @copyright  2026 Integration Hub Contributors
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
 define('CLI_SCRIPT', true);
 
 require(__DIR__ . '/../../../config.php');
@@ -34,23 +58,23 @@ Example:
 
 cli_heading("DLQ Replay Tool");
 
-$to_replay = [];
+$toreplay = [];
 
 if ($options['all']) {
-    $to_replay = $DB->get_records('local_integrationhub_dlq');
-    echo "Found " . count($to_replay) . " items in DLQ.\n";
+    $toreplay = $DB->get_records('local_integrationhub_dlq');
+    echo "Found " . count($toreplay) . " items in DLQ.\n";
 }
 else {
     $record = $DB->get_record('local_integrationhub_dlq', ['id' => $options['id']]);
     if ($record) {
-        $to_replay[] = $record;
+        $toreplay[] = $record;
     }
     else {
         cli_error("DLQ Entry {$options['id']} not found.");
     }
 }
 
-foreach ($to_replay as $item) {
+foreach ($toreplay as $item) {
     echo "Replaying Item {$item->id} (Event: {$item->eventname})...\n";
 
     // Logic: Create a new adhoc task with the saved payload.
@@ -62,7 +86,7 @@ foreach ($to_replay as $item) {
 
     // Checking dispatch_event_task:
     // $dlq->payload = json_encode($payload); -> This is the FINAL payload (after template).
-    // The task expects 'eventdata' to run template logic again. 
+    // The task expects 'eventdata' to run template logic again.
     // This is a design limitation. We should probably just send the payload directly via Gateway if we are replaying.
     // But we need the Service ID and Endpoint info.
 
@@ -97,7 +121,6 @@ foreach ($to_replay as $item) {
         else {
             echo "  [FAIL] MIH error: {$response->error}\n";
         }
-
     }
     catch (\Exception $e) {
         echo "  [ERROR] " . $e->getMessage() . "\n";

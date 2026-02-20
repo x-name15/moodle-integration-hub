@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -27,7 +28,6 @@ defined('MOODLE_INTERNAL') || die();
  */
 class registry
 {
-
     /** @var string Table name. */
     const TABLE = 'local_integrationhub_rules';
 
@@ -127,7 +127,7 @@ class registry
 
     /**
      * Get a human-readable name for an event class.
-     * 
+     *
      * @param string $classname
      * @return string
      */
@@ -137,11 +137,10 @@ class registry
         if (class_exists("\\{$classname}")) {
             try {
                 $fullclass = "\\{$classname}";
-                if (is_a($fullclass, \core\event\base::class , true)) {
+                if (is_a($fullclass, \core\event\base::class, true)) {
                     return $fullclass::get_name();
                 }
-            }
-            catch (\Exception $e) {
+            } catch (\Exception $e) {
             }
         }
         $parts = explode('\\', $classname);
@@ -154,7 +153,7 @@ class registry
 
     /**
      * Get all available events in the system dynamically.
-     * 
+     *
      * @return array [classname => Display Name]
      */
     public static function get_all_events_dynamic(): array
@@ -163,7 +162,7 @@ class registry
         $list = [];
 
         foreach (array_keys($events) as $event) {
-            if (is_a($event, \core\event\base::class , true)) {
+            if (is_a($event, \core\event\base::class, true)) {
                 $reflection = new \ReflectionClass($event);
                 if (!$reflection->isAbstract()) {
                     $list["\\{$event}"] = self::get_event_display_name($event);
@@ -177,7 +176,7 @@ class registry
 
     /**
      * Get a list of common events for the dropdown.
-     * 
+     *
      * @return array [classname => Display Name]
      */
     public static function get_common_events(): array

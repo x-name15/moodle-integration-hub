@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -46,8 +47,7 @@ if ($action === 'clearlogs' && has_capability('local/integrationhub:manage', $co
     }
     if ($status === 'success') {
         $conditions['success'] = 1;
-    }
-    elseif ($status === 'failure') {
+    } elseif ($status === 'failure') {
         $conditions['success'] = 0;
     }
 
@@ -55,8 +55,7 @@ if ($action === 'clearlogs' && has_capability('local/integrationhub:manage', $co
         $DB->delete_records('local_integrationhub_log', $conditions);
         // We use a generic message or constructing one based on filters would be overkill.
         \core\notification::success(get_string('logs_cleared', 'local_integrationhub'));
-    }
-    else {
+    } else {
         // No filters = Clear ALL.
         $DB->delete_records('local_integrationhub_log');
         \core\notification::success(get_string('logs_cleared', 'local_integrationhub'));
@@ -86,8 +85,7 @@ if ($serviceid > 0) {
 }
 if ($status === 'success') {
     $where[] = 'l.success = 1';
-}
-else if ($status === 'failure') {
+} elseif ($status === 'failure') {
     $where[] = 'l.success = 0';
 }
 
@@ -119,7 +117,7 @@ echo html_writer::start_div('mb-3');
 echo html_writer::link(
     new moodle_url('/local/integrationhub/index.php'),
     '← ' . get_string('dashboard', 'local_integrationhub'),
-['class' => 'btn btn-outline-secondary btn-sm']
+    ['class' => 'btn btn-outline-secondary btn-sm']
 );
 echo html_writer::end_div();
 
@@ -133,8 +131,11 @@ echo '<div class="row align-items-end" style="gap: 16px;">';
 
 // Service filter.
 echo '<div class="col-auto" style="margin-right: 12px;">';
-echo html_writer::tag('label', get_string('col_name', 'local_integrationhub'),
-['for' => 'filter-service', 'class' => 'form-label', 'style' => 'display:block; margin-bottom:6px;']);
+echo html_writer::tag(
+    'label',
+    get_string('col_name', 'local_integrationhub'),
+    ['for' => 'filter-service', 'class' => 'form-label', 'style' => 'display:block; margin-bottom:6px;']
+);
 echo html_writer::start_tag('select', [
     'name' => 'serviceid', 'id' => 'filter-service', 'class' => 'form-select',
 ]);
@@ -148,8 +149,11 @@ echo '</div>';
 
 // Status filter.
 echo '<div class="col-auto" style="margin-right: 12px;">';
-echo html_writer::tag('label', get_string('col_success', 'local_integrationhub'),
-['for' => 'filter-status', 'class' => 'form-label', 'style' => 'display:block; margin-bottom:6px;']);
+echo html_writer::tag(
+    'label',
+    get_string('col_success', 'local_integrationhub'),
+    ['for' => 'filter-status', 'class' => 'form-label', 'style' => 'display:block; margin-bottom:6px;']
+);
 echo html_writer::start_tag('select', [
     'name' => 'status', 'id' => 'filter-status', 'class' => 'form-select',
 ]);
@@ -201,14 +205,16 @@ echo html_writer::tag('style', "
 ");
 
 // Summary.
-echo html_writer::tag('p', "<strong>{$total}</strong> " . get_string('logs', 'local_integrationhub'),
-['class' => 'text-muted']);
+echo html_writer::tag(
+    'p',
+    "<strong>{$total}</strong> " . get_string('logs', 'local_integrationhub'),
+    ['class' => 'text-muted']
+);
 
 // Logs table.
 if (empty($logs)) {
     echo html_writer::div(get_string('nologs', 'local_integrationhub'), 'alert alert-info');
-}
-else {
+} else {
     echo html_writer::start_tag('div', ['class' => 'table-responsive']);
     // Force text-dark to avoid theme white-text issues on some backgrounds
     echo html_writer::start_tag('table', ['class' => 'table table-sm table-striped table-hover', 'style' => 'color: #212529 !important;']);
@@ -231,8 +237,7 @@ else {
         $dir = $log->direction ?? 'outbound';
         if ($dir === 'inbound') {
             echo html_writer::tag('td', html_writer::tag('span', '⬇ ' . get_string('direction_inbound', 'local_integrationhub'), ['class' => 'badge bg-info text-dark']));
-        }
-        else {
+        } else {
             echo html_writer::tag('td', html_writer::tag('span', '⬆ ' . get_string('direction_outbound', 'local_integrationhub'), ['class' => 'badge bg-secondary']));
         }
 
@@ -244,24 +249,30 @@ else {
 
         // Method badge.
         $methodclass = 'badge bg-secondary';
-        if ($log->http_method === 'GET')
+        if ($log->http_method === 'GET') {
             $methodclass = 'badge bg-success';
-        if ($log->http_method === 'POST')
+        }
+        if ($log->http_method === 'POST') {
             $methodclass = 'badge bg-primary';
-        if ($log->http_method === 'PUT')
+        }
+        if ($log->http_method === 'PUT') {
             $methodclass = 'badge bg-warning text-dark';
-        if ($log->http_method === 'DELETE')
+        }
+        if ($log->http_method === 'DELETE') {
             $methodclass = 'badge bg-danger';
-        if ($log->http_method === 'AMQP')
+        }
+        if ($log->http_method === 'AMQP') {
             $methodclass = 'badge bg-info text-dark';
+        }
         echo html_writer::tag('td', html_writer::tag('span', $log->http_method, ['class' => $methodclass]));
 
         // HTTP status.
         $statclass = '';
-        if ($log->http_status >= 200 && $log->http_status < 300)
+        if ($log->http_status >= 200 && $log->http_status < 300) {
             $statclass = 'text-success fw-bold';
-        else if ($log->http_status >= 400)
+        } elseif ($log->http_status >= 400) {
             $statclass = 'text-danger fw-bold';
+        }
         echo html_writer::tag('td', html_writer::tag('span', $log->http_status ?? '—', ['class' => $statclass]));
 
         // Latency.
@@ -273,12 +284,17 @@ else {
 
         // Success/Failure badge.
         if ($log->success) {
-            echo html_writer::tag('td', html_writer::tag('span',
-                get_string('result_success', 'local_integrationhub'), ['class' => 'badge bg-success']));
-        }
-        else {
-            echo html_writer::tag('td', html_writer::tag('span',
-                get_string('result_failure', 'local_integrationhub'), ['class' => 'badge bg-danger']));
+            echo html_writer::tag('td', html_writer::tag(
+                'span',
+                get_string('result_success', 'local_integrationhub'),
+                ['class' => 'badge bg-success']
+            ));
+        } else {
+            echo html_writer::tag('td', html_writer::tag(
+                'span',
+                get_string('result_failure', 'local_integrationhub'),
+                ['class' => 'badge bg-danger']
+            ));
         }
 
         // Error message.
@@ -288,8 +304,10 @@ else {
         ]));
 
         // Time.
-        echo html_writer::tag('td', html_writer::tag('small',
-            userdate($log->timecreated, get_string('strftimedatetimeshort', 'core_langconfig'))));
+        echo html_writer::tag('td', html_writer::tag(
+            'small',
+            userdate($log->timecreated, get_string('strftimedatetimeshort', 'core_langconfig'))
+        ));
 
         echo '</tr>';
     }

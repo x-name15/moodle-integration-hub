@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -30,7 +31,6 @@ defined('MOODLE_INTERNAL') || die();
  */
 class registry
 {
-
     /** @var string Table name for services. */
     const TABLE = 'local_integrationhub_svc';
 
@@ -86,7 +86,7 @@ class registry
         $record = new \stdClass();
         $record->name = clean_param($data->name, PARAM_TEXT);
         $record->type = clean_param($data->type ?? 'rest', PARAM_ALPHA);
-        $record->base_url = clean_param($data->base_url, PARAM_RAW_TRIMMED); // Allow amqp:// schemes
+        $record->base_url = clean_param($data->base_url, PARAM_RAW_TRIMMED); // Allow amqp:// schemes.
         $record->auth_type = clean_param($data->auth_type ?? 'bearer', PARAM_ALPHA);
         $record->auth_token = $data->auth_token ?? '';
         $record->timeout = (int)($data->timeout ?? 5);

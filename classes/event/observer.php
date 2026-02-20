@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -29,7 +30,6 @@ defined('MOODLE_INTERNAL') || die();
  */
 class observer
 {
-
     /**
      * Handle observed events.
      *
@@ -38,7 +38,7 @@ class observer
     public static function handle_event(\core\event\base $event)
     {
         global $DB;
-        $eventname = $event->eventname; // e.g., \core\event\user_created
+        $eventname = $event->eventname; // E.g., \core\event\user_created.
         $rules = $DB->get_records('local_integrationhub_rules', [
             'eventname' => $eventname,
             'enabled' => 1,
@@ -49,14 +49,14 @@ class observer
         }
 
         $cache = \cache::make('local_integrationhub', 'event_dedupe');
-        $sig_data = [
+        $sigdata = [
             'name' => $eventname,
             'obj' => $event->objectid,
             'user' => $event->userid,
             'rel' => $event->relateduserid,
             'crud' => $event->crud,
         ];
-        $signature = sha1(json_encode($sig_data));
+        $signature = sha1(json_encode($sigdata));
 
         if ($cache->get($signature)) {
             return;

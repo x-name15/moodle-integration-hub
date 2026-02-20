@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -29,8 +30,8 @@ use local_integrationhub\service\registry as service_registry;
  * @copyright  2026 Integration Hub Contributors
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class webhook_handler {
-
+class webhook_handler
+{
     /**
      * Process an inbound payload from an external service.
      *
@@ -39,7 +40,8 @@ class webhook_handler {
      * @param string    $source   The inbound source ('webhook' or 'amqp').
      * @return array ['success' => bool, 'error' => string|null]
      */
-    public static function handle(\stdClass $service, array $payload, string $source = 'webhook'): array {
+    public static function handle(\stdClass $service, array $payload, string $source = 'webhook'): array
+    {
         global $DB;
 
         $starttime = microtime(true);
@@ -72,7 +74,6 @@ class webhook_handler {
             $event->trigger();
 
             return ['success' => true, 'error' => null];
-
         } catch (\Exception $e) {
             // Log the error.
             $log = new \stdClass();

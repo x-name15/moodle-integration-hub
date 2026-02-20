@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -81,7 +82,7 @@ if (!empty($expectedtoken)) {
     if (function_exists('getallheaders')) {
         $headers = getallheaders();
         $authheader = $headers['Authorization'] ?? $headers['authorization'] ?? '';
-    } else if (!empty($_SERVER['HTTP_AUTHORIZATION'])) {
+    } elseif (!empty($_SERVER['HTTP_AUTHORIZATION'])) {
         $authheader = $_SERVER['HTTP_AUTHORIZATION'];
     }
 

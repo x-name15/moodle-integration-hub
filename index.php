@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -176,8 +177,11 @@ $statusstats = $DB->get_records_sql(
 $successcount = 0;
 $failcount = 0;
 foreach ($statusstats as $stat) {
-    if ($stat->success == 1) $successcount = (int)$stat->count;
-    else $failcount = (int)$stat->count;
+    if ($stat->success == 1) {
+        $successcount = (int)$stat->count;
+    } else {
+        $failcount = (int)$stat->count;
+    }
 }
 
 // 2. Latency Trend (Last 200 requests).
@@ -187,7 +191,9 @@ $chartdata = [];
 
 // Process in reverse to get chronological order.
 foreach (array_reverse($logs) as $log) {
-    if ($log->latency_ms === null) continue;
+    if ($log->latency_ms === null) {
+        continue;
+    }
     $chartlabels[] = date('H:i', $log->timecreated);
     $chartdata[] = (int)$log->latency_ms;
 }
@@ -266,10 +272,13 @@ if ($canmanage) {
         'id'    => 'ih-btn-add',
         'type'  => 'button',
     ]);
-    
+
     $resetallurl = new moodle_url($PAGE->url, ['action' => 'resetall', 'sesskey' => sesskey()]);
-    echo html_writer::link($resetallurl, '<i class="fa fa-refresh"></i> ' . get_string('resetallcircuits', 'local_integrationhub'), 
-        ['class' => 'btn btn-outline-warning']);
+    echo html_writer::link(
+        $resetallurl,
+        '<i class="fa fa-refresh"></i> ' . get_string('resetallcircuits', 'local_integrationhub'),
+        ['class' => 'btn btn-outline-warning']
+    );
 }
 echo html_writer::link(
     new moodle_url('/local/integrationhub/logs.php'),
@@ -394,14 +403,16 @@ if (!empty($editservice) && ($editservice->type === 'amqp')) {
     $amqpparts['port'] = $parsed['port'] ?? 5672;
     $amqpparts['user'] = $parsed['user'] ?? 'guest';
     $amqpparts['pass'] = $parsed['pass'] ?? 'guest';
-    
+
     // Decoded vhost for display
     $path = isset($parsed['path']) ? $parsed['path'] : '/';
     if ($path !== '/' && strpos($path, '/') === 0) {
         $path = substr($path, 1);
     }
     $amqpparts['vhost'] = urldecode($path);
-    if ($amqpparts['vhost'] === '') $amqpparts['vhost'] = '/';
+    if ($amqpparts['vhost'] === '') {
+        $amqpparts['vhost'] = '/';
+    }
 
     if (isset($parsed['query'])) {
         parse_str($parsed['query'], $query);
@@ -440,7 +451,7 @@ echo '</div>'; // .row (Connection)
 
     // Advanced: Queue & DLQ
     echo '<div class="row mt-2 border-top pt-2">';
-    
+
     // Exchange
     echo '<div class="col-md-3">';
     echo html_writer::tag('label', get_string('amqp_exchange', 'local_integrationhub'), ['class' => 'small fw-bold']);
@@ -503,199 +514,214 @@ echo '</div>'; // .row (Connection)
         'value' => $amqpparts['dlq']
     ]);
     echo '</div>';
-    
+
     echo '</div>'; // .row (Queues)
 
-echo '</div></div>';
-echo '</div>';
-
-foreach ($fields as $field) {
-    [$fname, $stringkey, $type, $value, $required] = $field;
-    $divclass = 'col-md-6 mb-3';
-    
-    // Hide base_url container if AMQP (handled by JS via ID)
-    if ($fname === 'base_url') {
-        $divclass .= ' ih-base-url-container'; // Marker class
-    }
-
-    echo '<div class="' . $divclass . '">';
-    echo html_writer::tag('label', get_string($stringkey, 'local_integrationhub'), [
-        'for' => "ih-{$fname}", 'class' => 'form-label', 'style' => 'display:block; margin-bottom:6px;',
-    ]);
-    $attrs = [
-        'type'  => $type,
-        'name'  => $fname,
-        'id'    => "ih-{$fname}",
-        'value' => $value,
-        'class' => 'form-control',
-    ];
-    if ($required) {
-        $attrs['required'] = 'required';
-    }
-    if ($type === 'number') {
-        $attrs['min'] = '0';
-    }
-    echo html_writer::empty_tag('input', $attrs);
-    if ($fname === 'base_url') {
-        echo html_writer::tag('div', get_string('base_url_help', 'local_integrationhub'), [
-            'class' => 'form-text text-muted', 'id' => 'ih-base_url-help'
-        ]);
-    }
-    if ($fname === 'response_queue') {
-        echo html_writer::tag('div', get_string('response_queue_help', 'local_integrationhub'), ['class' => 'form-text text-muted']);
-    }
+    echo '</div></div>';
     echo '</div>';
-}
 
-echo '</div>'; // .row
+    foreach ($fields as $field) {
+        [$fname, $stringkey, $type, $value, $required] = $field;
+        $divclass = 'col-md-6 mb-3';
+
+        // Hide base_url container if AMQP (handled by JS via ID)
+        if ($fname === 'base_url') {
+            $divclass .= ' ih-base-url-container'; // Marker class
+        }
+
+        echo '<div class="' . $divclass . '">';
+        echo html_writer::tag('label', get_string($stringkey, 'local_integrationhub'), [
+        'for' => "ih-{$fname}", 'class' => 'form-label', 'style' => 'display:block; margin-bottom:6px;',
+        ]);
+        $attrs = [
+            'type'  => $type,
+            'name'  => $fname,
+            'id'    => "ih-{$fname}",
+            'value' => $value,
+            'class' => 'form-control',
+        ];
+        if ($required) {
+            $attrs['required'] = 'required';
+        }
+        if ($type === 'number') {
+            $attrs['min'] = '0';
+        }
+        echo html_writer::empty_tag('input', $attrs);
+        if ($fname === 'base_url') {
+            echo html_writer::tag('div', get_string('base_url_help', 'local_integrationhub'), [
+            'class' => 'form-text text-muted', 'id' => 'ih-base_url-help'
+            ]);
+        }
+        if ($fname === 'response_queue') {
+            echo html_writer::tag('div', get_string('response_queue_help', 'local_integrationhub'), ['class' => 'form-text text-muted']);
+        }
+        echo '</div>';
+    }
+
+    echo '</div>'; // .row
 
 // Form buttons.
-echo html_writer::start_div('d-flex');
-echo html_writer::tag('button', get_string('saveservice', 'local_integrationhub'), [
+    echo html_writer::start_div('d-flex');
+    echo html_writer::tag('button', get_string('saveservice', 'local_integrationhub'), [
     'type' => 'submit', 'class' => 'btn btn-success me-2', // Added me-2 for spacing
-]);
-echo html_writer::tag('button', get_string('cancel', 'local_integrationhub'), [
+    ]);
+    echo html_writer::tag('button', get_string('cancel', 'local_integrationhub'), [
     'type' => 'button', 'class' => 'btn btn-secondary', 'id' => 'ih-btn-cancel',
-]);
-echo html_writer::end_div();
+    ]);
+    echo html_writer::end_div();
 
-echo html_writer::end_tag('form');
-echo html_writer::end_div(); // .card-body
-echo html_writer::end_div(); // .card #ih-service-form
+    echo html_writer::end_tag('form');
+    echo html_writer::end_div(); // .card-body
+    echo html_writer::end_div(); // .card #ih-service-form
 
 // Another spacer if form is hidden/shown, just to be safe.
 // spacer removed.
 
 // Services table.
-echo html_writer::tag('h4', get_string('services', 'local_integrationhub'), ['class' => 'mb-3', 'style' => 'clear: both;']);
+    echo html_writer::tag('h4', get_string('services', 'local_integrationhub'), ['class' => 'mb-3', 'style' => 'clear: both;']);
 
-if (empty($services)) {
-    echo html_writer::div(get_string('noservices', 'local_integrationhub'), 'alert alert-info');
-} else {
-    echo html_writer::start_tag('div', ['class' => 'table-responsive']);
-    // Force text-dark to avoid theme white-text issues
-    echo html_writer::start_tag('table', ['class' => 'table table-striped table-hover', 'id' => 'ih-services-table', 'style' => 'color: #212529 !important;']);
+    if (empty($services)) {
+        echo html_writer::div(get_string('noservices', 'local_integrationhub'), 'alert alert-info');
+    } else {
+        echo html_writer::start_tag('div', ['class' => 'table-responsive']);
+        // Force text-dark to avoid theme white-text issues
+        echo html_writer::start_tag('table', ['class' => 'table table-striped table-hover', 'id' => 'ih-services-table', 'style' => 'color: #212529 !important;']);
 
-    // Header.
-    echo '<thead class="table-dark"><tr>';
-    $headers = ['col_name', 'col_type', 'col_baseurl', 'col_authtype', 'col_circuit', 'col_latency',
+        // Header.
+        echo '<thead class="table-dark"><tr>';
+        $headers = ['col_name', 'col_type', 'col_baseurl', 'col_authtype', 'col_circuit', 'col_latency',
                 'col_errors', 'col_enabled'];
-    if ($canmanage) {
-        $headers[] = 'col_actions';
-    }
-    foreach ($headers as $h) {
-        echo html_writer::tag('th', get_string($h, 'local_integrationhub'));
-    }
-    echo '</tr></thead>';
-
-    // Body.
-    echo '<tbody>';
-    foreach ($services as $svc) {
-        echo '<tr>';
-        echo html_writer::tag('td', s($svc->name));
-        $typelabel = strtoupper($svc->type ?? 'rest');
-        $typeclass = 'badge bg-secondary';
-        if (($svc->type ?? 'rest') === 'amqp') {
-            $typeclass = 'badge bg-info text-dark';
-        } elseif (($svc->type ?? 'rest') === 'soap') {
-            $typeclass = 'badge bg-warning text-dark';
+        if ($canmanage) {
+            $headers[] = 'col_actions';
         }
-        echo html_writer::tag('td', html_writer::tag('span', $typelabel, ['class' => $typeclass]));
-        echo html_writer::tag('td', html_writer::tag('code', s($svc->base_url)));
-
-        // Auth type badge.
-        $authbadge = ($svc->auth_type === 'bearer') ? 'badge bg-primary' : 'badge bg-info';
-        echo html_writer::tag('td', html_writer::tag('span', strtoupper(s($svc->auth_type)), ['class' => $authbadge]));
-
-        // Circuit state badge.
-        $cbclass = 'badge bg-success';
-        if ($svc->circuit_state_raw === 'open') {
-            $cbclass = 'badge bg-danger';
-        } else if ($svc->circuit_state_raw === 'halfopen') {
-            $cbclass = 'badge bg-warning text-dark';
+        foreach ($headers as $h) {
+            echo html_writer::tag('th', get_string($h, 'local_integrationhub'));
         }
-        echo html_writer::tag('td', html_writer::tag('span', $svc->circuit_state, ['class' => $cbclass]));
+        echo '</tr></thead>';
 
-        // Latency.
-        $latency = $svc->avg_latency ? round($svc->avg_latency) . ' ms' : '—';
-        echo html_writer::tag('td', $latency);
+        // Body.
+        echo '<tbody>';
+        foreach ($services as $svc) {
+            echo '<tr>';
+            echo html_writer::tag('td', s($svc->name));
+            $typelabel = strtoupper($svc->type ?? 'rest');
+            $typeclass = 'badge bg-secondary';
+            if (($svc->type ?? 'rest') === 'amqp') {
+                $typeclass = 'badge bg-info text-dark';
+            } elseif (($svc->type ?? 'rest') === 'soap') {
+                $typeclass = 'badge bg-warning text-dark';
+            }
+            echo html_writer::tag('td', html_writer::tag('span', $typelabel, ['class' => $typeclass]));
+            echo html_writer::tag('td', html_writer::tag('code', s($svc->base_url)));
 
-        // Recent errors.
-        $errclass = $svc->recent_errors > 0 ? 'text-danger fw-bold' : 'text-muted';
-        echo html_writer::tag('td', html_writer::tag('span', $svc->recent_errors, ['class' => $errclass]));
+            // Auth type badge.
+            $authbadge = ($svc->auth_type === 'bearer') ? 'badge bg-primary' : 'badge bg-info';
+            echo html_writer::tag('td', html_writer::tag('span', strtoupper(s($svc->auth_type)), ['class' => $authbadge]));
 
-        // Enabled status.
-        $statusclass = $svc->enabled ? 'badge bg-success' : 'badge bg-secondary';
-        $statuslabel = $svc->enabled
+            // Circuit state badge.
+            $cbclass = 'badge bg-success';
+            if ($svc->circuit_state_raw === 'open') {
+                $cbclass = 'badge bg-danger';
+            } elseif ($svc->circuit_state_raw === 'halfopen') {
+                $cbclass = 'badge bg-warning text-dark';
+            }
+            echo html_writer::tag('td', html_writer::tag('span', $svc->circuit_state, ['class' => $cbclass]));
+
+            // Latency.
+            $latency = $svc->avg_latency ? round($svc->avg_latency) . ' ms' : '—';
+            echo html_writer::tag('td', $latency);
+
+            // Recent errors.
+            $errclass = $svc->recent_errors > 0 ? 'text-danger fw-bold' : 'text-muted';
+            echo html_writer::tag('td', html_writer::tag('span', $svc->recent_errors, ['class' => $errclass]));
+
+            // Enabled status.
+            $statusclass = $svc->enabled ? 'badge bg-success' : 'badge bg-secondary';
+            $statuslabel = $svc->enabled
             ? get_string('status_active', 'local_integrationhub')
             : get_string('status_disabled', 'local_integrationhub');
-        echo html_writer::tag('td', html_writer::tag('span', $statuslabel, ['class' => $statusclass]));
+            echo html_writer::tag('td', html_writer::tag('span', $statuslabel, ['class' => $statusclass]));
 
-        // Actions.
-        if ($canmanage) {
-            echo '<td class="text-nowrap">';
+            // Actions.
+            if ($canmanage) {
+                echo '<td class="text-nowrap">';
 
-            // Logs for this service.
-            $logsurl = new moodle_url('/local/integrationhub/logs.php', ['serviceid' => $svc->id]);
-            echo html_writer::link($logsurl, '<i class="fa fa-bar-chart"></i> ',
-                ['class' => 'btn btn-sm btn-outline-info me-1', 'title' => get_string('viewlogs', 'local_integrationhub')]);
+                // Logs for this service.
+                $logsurl = new moodle_url('/local/integrationhub/logs.php', ['serviceid' => $svc->id]);
+                echo html_writer::link(
+                    $logsurl,
+                    '<i class="fa fa-bar-chart"></i> ',
+                    ['class' => 'btn btn-sm btn-outline-info me-1', 'title' => get_string('viewlogs', 'local_integrationhub')]
+                );
 
-            // Edit button.
-            $editurl = new moodle_url($PAGE->url, ['action' => 'edit', 'serviceid' => $svc->id]);
-            echo html_writer::link($editurl, '<i class="fa fa-pencil"></i> ',
-                ['class' => 'btn btn-sm btn-outline-primary me-1', 'title' => get_string('editservice', 'local_integrationhub')]);
+                // Edit button.
+                $editurl = new moodle_url($PAGE->url, ['action' => 'edit', 'serviceid' => $svc->id]);
+                echo html_writer::link(
+                    $editurl,
+                    '<i class="fa fa-pencil"></i> ',
+                    ['class' => 'btn btn-sm btn-outline-primary me-1', 'title' => get_string('editservice', 'local_integrationhub')]
+                );
 
-            // Delete button.
-            $deleteurl = new moodle_url($PAGE->url, [
-                'action' => 'delete', 'serviceid' => $svc->id,
-                'confirm' => 1, 'sesskey' => sesskey(),
-            ]);
-            echo html_writer::link($deleteurl, '<i class="fa fa-trash"></i> ',
-                ['class' => 'btn btn-sm btn-outline-danger me-1',
-                 'title' => get_string('deleteservice', 'local_integrationhub'),
-                 'onclick' => "return confirm('" .
-                    addslashes_js(get_string('deleteconfirm', 'local_integrationhub', $svc->name)) . "');"]);
-
-            // Reset circuit (only if not closed).
-            if ($svc->circuit_state_raw !== 'closed') {
-                $reseturl = new moodle_url($PAGE->url, [
-                    'action' => 'resetcircuit', 'serviceid' => $svc->id, 'sesskey' => sesskey(),
+                // Delete button.
+                $deleteurl = new moodle_url($PAGE->url, [
+                    'action' => 'delete', 'serviceid' => $svc->id,
+                    'confirm' => 1, 'sesskey' => sesskey(),
                 ]);
-                echo html_writer::link($reseturl, '<i class="fa fa-refresh"></i> ',
-                    ['class' => 'btn btn-sm btn-outline-warning',
-                     'title' => get_string('resetcircuit', 'local_integrationhub')]);
+                echo html_writer::link(
+                    $deleteurl,
+                    '<i class="fa fa-trash"></i> ',
+                    ['class' => 'btn btn-sm btn-outline-danger me-1',
+                     'title' => get_string('deleteservice', 'local_integrationhub'),
+                     'onclick' => "return confirm('" .
+                    addslashes_js(get_string('deleteconfirm', 'local_integrationhub', $svc->name)) . "');"]
+                );
+
+                // Reset circuit (only if not closed).
+                if ($svc->circuit_state_raw !== 'closed') {
+                    $reseturl = new moodle_url($PAGE->url, [
+                        'action' => 'resetcircuit', 'serviceid' => $svc->id, 'sesskey' => sesskey(),
+                    ]);
+                    echo html_writer::link(
+                        $reseturl,
+                        '<i class="fa fa-refresh"></i> ',
+                        ['class' => 'btn btn-sm btn-outline-warning',
+                         'title' => get_string(
+                             'resetcircuit',
+                             'local_integrationhub'
+                         )]
+                    );
+                }
+
+                echo '</td>';
             }
 
-            echo '</td>';
+            echo '</tr>';
         }
-
-        echo '</tr>';
+        echo '</tbody></table></div>';
     }
-    echo '</tbody></table></div>';
-}
 
 // Delete confirmation dialog (if pending).
-if ($action === 'delete' && $serviceid > 0 && !$confirm && $canmanage) {
-    try {
-        $service = service_registry::get_service_by_id($serviceid);
-        $confirmurl = new moodle_url($PAGE->url, [
+    if ($action === 'delete' && $serviceid > 0 && !$confirm && $canmanage) {
+        try {
+            $service = service_registry::get_service_by_id($serviceid);
+            $confirmurl = new moodle_url($PAGE->url, [
             'action' => 'delete', 'serviceid' => $serviceid,
             'confirm' => 1, 'sesskey' => sesskey(),
-        ]);
-        $cancelurl = $PAGE->url;
-        echo $OUTPUT->confirm(
-            get_string('deleteconfirm', 'local_integrationhub', $service->name),
-            $confirmurl,
-            $cancelurl
-        );
-    } catch (\Exception $e) {
-        // Service not found, just redirect.
-        redirect($PAGE->url);
+            ]);
+            $cancelurl = $PAGE->url;
+            echo $OUTPUT->confirm(
+                get_string('deleteconfirm', 'local_integrationhub', $service->name),
+                $confirmurl,
+                $cancelurl
+            );
+        } catch (\Exception $e) {
+            // Service not found, just redirect.
+            redirect($PAGE->url);
+        }
     }
-}
 
 // Call AMD Module.
-$PAGE->requires->js_call_amd('local_integrationhub/dashboard', 'init', [
+    $PAGE->requires->js_call_amd('local_integrationhub/dashboard', 'init', [
     $chartdata_js,
     [
         'success'    => get_string('success', 'local_integrationhub'),
@@ -704,6 +730,6 @@ $PAGE->requires->js_call_amd('local_integrationhub/dashboard', 'init', [
         'url_help_rest' => get_string('url_help_rest', 'local_integrationhub'),
         'url_help_amqp' => get_string('url_help_amqp', 'local_integrationhub'),
     ]
-]);
+    ]);
 
-echo $OUTPUT->footer();
+    echo $OUTPUT->footer();

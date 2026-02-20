@@ -1,4 +1,20 @@
 <?php
+
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 namespace local_integrationhub\transport;
 
 defined('MOODLE_INTERNAL') || die();
@@ -7,6 +23,10 @@ defined('MOODLE_INTERNAL') || die();
  * HTTP Transport Driver.
  *
  * Handles standard REST/HTTP calls using Moodle's curl library.
+ *
+ * @package    local_integrationhub
+ * @copyright  2026 Integration Hub Contributors
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class http implements contract
 {
@@ -30,7 +50,7 @@ class http implements contract
             if ($service->auth_type === 'bearer') {
                 $headers[] = 'Authorization: Bearer ' . $service->auth_token;
             }
-            else if ($service->auth_type === 'apikey') {
+            elseif ($service->auth_type === 'apikey') {
                 $headers[] = 'X-API-Key: ' . $service->auth_token;
             }
         }
@@ -45,7 +65,7 @@ class http implements contract
         curl_setopt($ch, CURLOPT_TIMEOUT, (int)$service->timeout);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, min((int)$service->timeout, 10));
 
-        // Method
+        // Method.
         switch ($method) {
             case 'POST':
                 curl_setopt($ch, CURLOPT_POST, true);
@@ -68,18 +88,18 @@ class http implements contract
                 break;
         }
 
-        // Headers
+        // Headers.
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 
         try {
             $resp = curl_exec($ch);
             $curlerr = curl_errno($ch);
-            $curlerr_msg = curl_error($ch);
+            $curlerrmsg = curl_error($ch);
             $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             curl_close($ch);
 
             if ($curlerr) {
-                throw new \Exception("cURL error {$curlerr} for {$url}: " . $curlerr_msg);
+                throw new \Exception("cURL error {$curlerr} for {$url}: " . $curlerrmsg);
             }
 
             // Determine success (2xx).
@@ -91,7 +111,6 @@ class http implements contract
             else {
                 return $this->error_result("HTTP {$httpcode}", $starttime, $attempts, $httpcode);
             }
-
         }
         catch (\Exception $e) {
             return $this->error_result($e->getMessage(), $starttime, $attempts, 0);

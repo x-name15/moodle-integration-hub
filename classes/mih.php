@@ -1,10 +1,19 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace local_integrationhub;
 
@@ -33,7 +42,6 @@ use local_integrationhub\service\retry_policy;
  */
 class mih
 {
-
     /** @var mih|null Singleton instance. */
     private static $instance = null;
 
@@ -62,7 +70,12 @@ class mih
      * @param string $method      HTTP method.
      * @return mih_response
      */
-    public static function request(string $servicename, string $endpoint = '/', array $payload = [], string $method = 'POST'): mih_response
+    public static function request(
+        string $servicename,
+        string $endpoint = '/',
+        array $payload = [],
+        string $method = 'POST'
+        ): mih_response
     {
         return self::instance()->execute_request($servicename, $endpoint, $payload, $method);
     }
@@ -88,8 +101,12 @@ class mih
      * @return gateway_response   The response wrapper.
      * @throws \moodle_exception  If the service is not found or circuit is open.
      */
-    public function execute_request(string $servicename, string $endpoint = '/', array $payload = [],
-        string $method = ''): mih_response
+    public function execute_request(
+        string $servicename,
+        string $endpoint = '/',
+        array $payload = [],
+        string $method = ''
+        ): mih_response
     {
 
         // 1. Resolve the service from the registry.
@@ -105,8 +122,16 @@ class mih
         // 2. Check circuit breaker.
         $cb = circuit_breaker::from_service($service);
         if (!$cb->is_available()) {
-            $this->log_request($service->id, $endpoint, $method, null, 0, 0, false,
-                'Circuit breaker is OPEN');
+            $this->log_request(
+                $service->id,
+                $endpoint,
+                $method,
+                null,
+                0,
+                0,
+                false,
+                'Circuit breaker is OPEN'
+            );
             throw new \moodle_exception('circuit_open', 'local_integrationhub', '', $servicename);
         }
 
@@ -141,7 +166,6 @@ class mih
             else {
                 $cb->record_failure();
             }
-
         }
         catch (\Exception $e) {
             $cb->record_failure();
@@ -187,9 +211,16 @@ class mih
      * @param bool     $success     Whether the request was successful.
      * @param string|null $error    Error message if any.
      */
-    private function log_request(int $serviceid, string $endpoint, string $method,
-        ?int $httpstatus, int $latencyms, int $attempts,
-        bool $success, ?string $error): void
+    private function log_request(
+        int $serviceid,
+        string $endpoint,
+        string $method,
+        ?int $httpstatus,
+        int $latencyms,
+        int $attempts,
+        bool $success,
+        ?string $error
+        ): void
     {
         global $DB;
 

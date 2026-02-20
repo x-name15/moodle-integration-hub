@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -25,8 +26,8 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright  Mr Jacket - Felix Manrique
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class retry_policy {
-
+class retry_policy
+{
     /** @var int Maximum number of attempts (1 = no retry). */
     private $maxretries;
 
@@ -39,7 +40,8 @@ class retry_policy {
      * @param int $maxretries Maximum retry attempts.
      * @param int $backoffseconds Initial backoff delay in seconds (doubles each retry).
      */
-    public function __construct(int $maxretries = 3, int $backoffseconds = 1) {
+    public function __construct(int $maxretries = 3, int $backoffseconds = 1)
+    {
         $this->maxretries = max(0, $maxretries);
         $this->backoffseconds = max(1, $backoffseconds);
     }
@@ -50,11 +52,12 @@ class retry_policy {
      * @param \stdClass $service A service record from the database.
      * @return self
      */
-    public static function from_service(\stdClass $service): self {
+    public static function from_service(\stdClass $service): self
+    {
         return new self(
             (int)($service->max_retries ?? 3),
             (int)($service->retry_backoff ?? 1)
-        );
+            );
     }
 
     /**
@@ -67,14 +70,16 @@ class retry_policy {
      * @return mixed The result of the successful operation.
      * @throws \Exception The last exception if all attempts fail.
      */
-    public function execute(callable $operation) {
+    public function execute(callable $operation)
+    {
         $lastexception = null;
-        $attempts = $this->maxretries + 1; // +1 for the initial attempt.
+        $attempts = $this->maxretries + 1; // Plus 1 for the initial attempt.
 
         for ($attempt = 0; $attempt < $attempts; $attempt++) {
             try {
                 return $operation($attempt);
-            } catch (\Exception $e) {
+            }
+            catch (\Exception $e) {
                 $lastexception = $e;
 
                 // Don't sleep after the last attempt.
@@ -95,7 +100,8 @@ class retry_policy {
      *
      * @return int
      */
-    public function get_total_attempts(): int {
+    public function get_total_attempts(): int
+    {
         return $this->maxretries + 1;
     }
 }

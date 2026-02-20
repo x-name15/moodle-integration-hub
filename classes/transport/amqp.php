@@ -1,4 +1,20 @@
 <?php
+
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 namespace local_integrationhub\transport;
 
 defined('MOODLE_INTERNAL') || die();
@@ -14,13 +30,23 @@ use PhpAmqpLib\Message\AMQPMessage;
  * Handles publishing messages to RabbitMQ.
  * Expects 'base_url' to be a connection string (e.g. amqp://user:pass@host:5672).
  * Expects 'endpoint' to be the Routing Key or Queue name.
+ *
+ * @package    local_integrationhub
+ * @copyright  2026 Integration Hub Contributors
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class amqp implements contract
 {
     use transport_utils;
 
     /**
-     * @inheritDoc
+     * Execute a request using the AMQP transport.
+     *
+     * @param \stdClass $service The service definition object.
+     * @param string $endpoint   The Routing Key or Queue name.
+     * @param array $payload     The data to send.
+     * @param string $method     (Optional) Action method.
+     * @return array             Response array.
      */
     public function execute(\stdClass $service, string $endpoint, array $payload, string $method = ''): array
     {
@@ -28,27 +54,27 @@ class amqp implements contract
         $attempts = 1;
 
         try {
-            // Parse configuration from URL query params
-            $parsed_url = parse_url($service->base_url);
+            // Parse configuration from URL query params.
+            $parsedurl = parse_url($service->base_url);
             $query = [];
-            if (isset($parsed_url['query'])) {
-                parse_str($parsed_url['query'], $query);
+            if (isset($parsedurl['query'])) {
+                parse_str($parsedurl['query'], $query);
             }
 
-            // Connection Logic
+            // Connection Logic.
             $connection = amqp_helper::create_connection($service->base_url, (int)$service->timeout);
             $channel = $connection->channel();
 
-            // Determine Exchange and Routing Key
+            // Determine Exchange and Routing Key.
             $exchange = $query['exchange'] ?? '';
 
-            // Routing Key: Rule/Endpoint overrides Config Default
+            // Routing Key: Rule/Endpoint overrides Config Default.
             $routingkey = ltrim($endpoint, '/');
             if (empty($routingkey) && !empty($query['routing_key'])) {
                 $routingkey = $query['routing_key'];
             }
 
-            // Queue Declaration (Optional side-effect)
+            // Queue Declaration (Optional side-effect).
             // Only declare if 'queue_declare' param IS SET.
             if (!empty($query['queue_declare'])) {
                 amqp_helper::ensure_queue($channel, $query['queue_declare']);
@@ -62,8 +88,8 @@ class amqp implements contract
 
             // Implicit "Direct to Queue" fallback:
             // If Exchange is empty AND we have a Routing Key, RabbitMQ treats it as "Send to Queue named X".
-            // In this specific case, if the user didn't ask to declare explicitly, 
-            // should we do it anyway to ensure delivery? 
+            // In this specific case, if the user didn't ask to declare explicitly,
+            // should we do it anyway to ensure delivery?
             // The user wants control. If they didn't put it in "Queue to Declare", we don't declare.
             // BUT: Old behavior was "ensure_queue($routingkey)".
             // Let's Respect the new field strictly: Only declare if 'queue_declare' is present.
@@ -81,7 +107,6 @@ class amqp implements contract
 
             $target = empty($exchange) ? "DefEx -> RK:{$routingkey}" : "Ex:{$exchange} -> RK:{$routingkey}";
             return $this->success_result("Published to {$target}", $starttime, $attempts, 0);
-
         }
         catch (\Exception $e) {
             return $this->error_result('AMQP Error: ' . $e->getMessage(), $starttime, $attempts);

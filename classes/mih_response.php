@@ -1,10 +1,19 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace local_integrationhub;
 
@@ -19,7 +28,6 @@ defined('MOODLE_INTERNAL') || die();
  */
 class mih_response
 {
-
     /** @var bool Whether the request was successful. */
     public $success;
 
@@ -48,8 +56,14 @@ class mih_response
      * @param int         $latencyms  Latency in ms.
      * @param int         $attempts   Number of attempts.
      */
-    public function __construct(bool $success, ?int $httpstatus, ?string $body,
-        ?string $error, int $latencyms, int $attempts)
+    public function __construct(
+        bool $success,
+        ?int $httpstatus,
+        ?string $body,
+        ?string $error,
+        int $latencyms,
+        int $attempts
+        )
     {
         $this->success = $success;
         $this->httpstatus = $httpstatus;

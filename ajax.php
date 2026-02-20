@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -13,6 +14,14 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * AJAX endpoint for the Integration Hub plugin.
+ *
+ * @package    local_integrationhub
+ * @copyright  2026 Integration Hub Contributors
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
 require(__DIR__ . '/../../config.php');
 
@@ -33,9 +42,9 @@ if ($action === 'preview_payload') {
     // Mock data for interpolation.
     $mockdata = [
         'eventname' => $eventname ?: '\core\event\course_created',
-        'objectid'  => 123,
-        'userid'    => 5,
-        'courseid'  => 10,
+        'objectid' => 123,
+        'userid' => 5,
+        'courseid' => 10,
         'contextid' => 1,
         'timecreated' => time(),
         'ip' => '127.0.0.1'
@@ -55,13 +64,14 @@ if ($action === 'preview_payload') {
         echo json_encode([
             'success' => false,
             'error' => json_last_error_msg(),
-            'raw'   => $json
+            'raw' => $json
         ]);
-    } else {
+    }
+    else {
         echo json_encode([
             'success' => true,
             'payload' => $decoded,
-            'raw'     => $json
+            'raw' => $json
         ]);
     }
     exit;
