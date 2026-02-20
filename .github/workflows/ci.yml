@@ -22,14 +22,29 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - php: '8.0'
+            moodle: 'MOODLE_400_STABLE'
+            db: mariadb
           - php: '8.1'
             moodle: 'MOODLE_401_STABLE'
             db: mariadb
           - php: '8.1'
             moodle: 'MOODLE_402_STABLE'
             db: mariadb
-          - php: '8.2'
+          - php: '8.1'
             moodle: 'MOODLE_403_STABLE'
+            db: mariadb
+          - php: '8.1'
+            moodle: 'MOODLE_404_STABLE'
+            db: mariadb
+          - php: '8.1'
+            moodle: 'MOODLE_405_STABLE'
+            db: mariadb
+          - php: '8.2'
+            moodle: 'MOODLE_500_STABLE'
+            db: mariadb
+          - php: '8.3'
+            moodle: 'MOODLE_501_STABLE'
             db: mariadb
 
     steps:
