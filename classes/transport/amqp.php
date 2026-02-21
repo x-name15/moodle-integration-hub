@@ -46,10 +46,8 @@ class amqp implements contract
      * @param array $payload     The data to send.
      * @param string $method   Not used for AMQP, kept for interface compliance.
      * @return array Response payload
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
-    public function execute(\stdClass $service, string $endpoint, array $payload, string $method = ''): array
-    {
+    public function execute(\stdClass $service, string $endpoint, array $payload, string $method = ''): array {
         $starttime = microtime(true);
         $attempts = 1;
 
@@ -107,8 +105,7 @@ class amqp implements contract
 
             $target = empty($exchange) ? "DefEx -> RK:{$routingkey}" : "Ex:{$exchange} -> RK:{$routingkey}";
             return $this->success_result("Published to {$target}", $starttime, $attempts, 0);
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             return $this->error_result('AMQP Error: ' . $e->getMessage(), $starttime, $attempts);
         }
     }

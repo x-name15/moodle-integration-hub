@@ -27,8 +27,7 @@
  *
  * @param global_navigation $navigation The global navigation object.
  */
-function local_integrationhub_extend_navigation(global_navigation $navigation)
-{
+function local_integrationhub_extend_navigation(global_navigation $navigation) {
     $context = context_system::instance();
     if (has_capability('local/integrationhub:view', $context)) {
         $node = $navigation->add(

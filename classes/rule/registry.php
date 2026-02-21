@@ -35,8 +35,7 @@ class registry
      * @return \stdClass
      * @throws \moodle_exception
      */
-    public static function get_rule(int $id): \stdClass
-    {
+    public static function get_rule(int $id): \stdClass {
         global $DB;
         $rule = $DB->get_record(self::TABLE, ['id' => $id], '*', MUST_EXIST);
         return $rule;
@@ -47,8 +46,7 @@ class registry
      *
      * @return array
      */
-    public static function get_all_rules(): array
-    {
+    public static function get_all_rules(): array {
         global $DB;
         return $DB->get_records(self::TABLE, null, 'eventname ASC');
     }
@@ -59,8 +57,7 @@ class registry
      * @param \stdClass $data Rule data.
      * @return int New rule ID.
      */
-    public static function create_rule(\stdClass $data): int
-    {
+    public static function create_rule(\stdClass $data): int {
         global $DB;
 
         $rule = new \stdClass();
@@ -82,8 +79,7 @@ class registry
      * @param int $id Rule ID.
      * @param \stdClass $data New data.
      */
-    public static function update_rule(int $id, \stdClass $data): void
-    {
+    public static function update_rule(int $id, \stdClass $data): void {
         global $DB;
 
         $rule = self::get_rule($id);
@@ -116,8 +112,7 @@ class registry
      *
      * @param int $id Rule ID.
      */
-    public static function delete_rule(int $id): void
-    {
+    public static function delete_rule(int $id): void {
         global $DB;
         $DB->delete_records(self::TABLE, ['id' => $id]);
     }
@@ -128,19 +123,16 @@ class registry
      * @param string $classname
      * @return string
      */
-    public static function get_event_display_name(string $classname): string
-    {
+    public static function get_event_display_name(string $classname): string {
         $classname = ltrim($classname, '\\');
         if (class_exists("\\{$classname}")) {
             try {
                 $fullclass = "\\{$classname}";
-                if (is_a($fullclass, \core\event\base::class , true)) {
+                if (is_a($fullclass, \core\event\base::class, true)) {
                     return $fullclass::get_name();
                 }
-            }
-            catch (\Exception $e) {
-            // Ignore exceptions when checking classes.
-
+            } catch (\Exception $e) {
+                debugging($e->getMessage(), DEBUG_DEVELOPER);
             }
         }
         $parts = explode('\\', $classname);
@@ -156,13 +148,12 @@ class registry
      *
      * @return array [classname => Display Name]
      */
-    public static function get_all_events_dynamic(): array
-    {
+    public static function get_all_events_dynamic(): array {
         $events = \core_component::get_component_classes_in_namespace(null, 'event');
         $list = [];
 
         foreach (array_keys($events) as $event) {
-            if (is_a($event, \core\event\base::class , true)) {
+            if (is_a($event, \core\event\base::class, true)) {
                 $reflection = new \ReflectionClass($event);
                 if (!$reflection->isAbstract()) {
                     $list["\\{$event}"] = self::get_event_display_name($event);
@@ -179,8 +170,7 @@ class registry
      *
      * @return array [classname => Display Name]
      */
-    public static function get_common_events(): array
-    {
+    public static function get_common_events(): array {
         $common = [
             '\core\event\user_created',
             '\core\event\user_loggedin',

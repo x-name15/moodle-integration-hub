@@ -37,11 +37,8 @@ class http implements contract
      * @param array $payload The request payload data.
      * @param string $method The HTTP method.
      * @return array Processed response array.
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     * @SuppressWarnings(PHPMD.NPathComplexity)
      */
-    public function execute(\stdClass $service, string $endpoint, array $payload, string $method = 'POST'): array
-    {
+    public function execute(\stdClass $service, string $endpoint, array $payload, string $method = 'POST'): array {
         global $CFG;
         require_once($CFG->libdir . '/filelib.php');
 
@@ -54,8 +51,7 @@ class http implements contract
         if (!empty($service->auth_token)) {
             if ($service->auth_type === 'bearer') {
                 $headers[] = 'Authorization: Bearer ' . $service->auth_token;
-            }
-            else if ($service->auth_type === 'apikey') {
+            } else if ($service->auth_type === 'apikey') {
                 $headers[] = 'X-API-Key: ' . $service->auth_token;
             }
         }
@@ -112,12 +108,10 @@ class http implements contract
 
             if ($success) {
                 return $this->success_result($resp, $starttime, $attempts, $httpcode);
-            }
-            else {
+            } else {
                 return $this->error_result("HTTP {$httpcode}", $starttime, $attempts, $httpcode);
             }
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             return $this->error_result($e->getMessage(), $starttime, $attempts, 0);
         }
     }
