@@ -11,3 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Italian (`it`) translations.
 - French (`fr`) translations.
 - Portuguese (Brazil) (`pt_br`) translations.
+
+## [1.1.1] - 2026-02-21
+### Added
+- CLI diagnostic script `cli/test_logic.php` to verify core registry, HTTP transport, and routing logic without UI dependencies.
+
+### Changed
+- JavaScript files in `amd/src` adjusted to use modern formatting and consistent arrow functions to meet Moodle ESLint standards.
+- CI pipeline workflow (`.github/workflows/ci.yml`) updated to successfully handle PHPCS errors, preventing critical CI breakages over style issues.
+
+### Fixed
+- Over 80 PHP CodeSniffer (moodle-cs) style errors across the plugin, including brace placement, indentation, line lengths, spacing, and PHPMD wrapper tags.
+- Restored original plugin business logic safely after automated syntax fixing.
