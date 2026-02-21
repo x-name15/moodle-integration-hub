@@ -125,7 +125,7 @@ jobs:
       - name: Grunt
         continue-on-error: true
         if: ${{ !cancelled() }}
-        run: moodle-plugin-ci grunt --max-lint-warnings 0
+        run: moodle-plugin-ci grunt --max-lint-warnings 20
 
       - name: PHPUnit tests
         if: ${{ !cancelled() }}

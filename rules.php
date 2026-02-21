@@ -59,8 +59,7 @@ if ($canmanage && $action === 'save' && confirm_sesskey()) {
     if ($ruleid > 0) {
         rules_registry::update_rule($ruleid, $data);
         \core\notification::success(get_string('ruleupdated', 'local_integrationhub'));
-    }
-    else {
+    } else {
         rules_registry::create_rule($data);
         \core\notification::success(get_string('rulecreated', 'local_integrationhub'));
     }
@@ -149,7 +148,7 @@ echo '<div class="col-md-6 mb-3">';
 echo html_writer::tag(
     'label',
     get_string('rule_event', 'local_integrationhub'),
-['for' => 'ih-eventname', 'class' => 'form-label', 'style' => 'display:block; margin-bottom:6px;']
+    ['for' => 'ih-eventname', 'class' => 'form-label', 'style' => 'display:block; margin-bottom:6px;']
 );
 echo html_writer::empty_tag('input', [
     'type' => 'text',
@@ -174,7 +173,7 @@ echo '<div class="col-md-6 mb-3">';
 echo html_writer::tag(
     'label',
     get_string('rule_service', 'local_integrationhub'),
-['for' => 'ih-serviceid', 'class' => 'form-label', 'style' => 'display:block; margin-bottom:6px;']
+    ['for' => 'ih-serviceid', 'class' => 'form-label', 'style' => 'display:block; margin-bottom:6px;']
 );
 echo html_writer::start_tag('select', ['name' => 'serviceid', 'id' => 'ih-serviceid', 'class' => 'form-select', 'required' => 'required']);
 echo '<option value="">' . get_string('selectservice', 'local_integrationhub') . '</option>';
@@ -207,7 +206,7 @@ echo '<div class="col-md-6 mb-3">';
 echo html_writer::tag(
     'label',
     get_string('rule_endpoint', 'local_integrationhub'),
-['for' => 'ih-endpoint', 'class' => 'form-label', 'style' => 'display:block; margin-bottom:6px;']
+    ['for' => 'ih-endpoint', 'class' => 'form-label', 'style' => 'display:block; margin-bottom:6px;']
 );
 echo html_writer::empty_tag('input', [
     'type' => 'text', 'name' => 'endpoint', 'id' => 'ih-endpoint', 'class' => 'form-control',
@@ -236,7 +235,7 @@ echo '<div class="col-12 mb-3">';
 echo html_writer::tag(
     'label',
     get_string('rule_template', 'local_integrationhub'),
-['for' => 'ih-template', 'class' => 'form-label', 'style' => 'display:block; margin-bottom:6px;']
+    ['for' => 'ih-template', 'class' => 'form-label', 'style' => 'display:block; margin-bottom:6px;']
 );
 echo html_writer::tag('textarea', $editrule->payload_template ?? '{"event": "{{eventname}}", "user": "{{userid}}"}', [
     'name' => 'payload_template', 'id' => 'ih-template', 'class' => 'form-control', 'rows' => 4,
@@ -275,8 +274,7 @@ echo html_writer::tag('h4', get_string('rules', 'local_integrationhub'), ['class
 
 if (empty($rules)) {
     echo html_writer::div(get_string('norules', 'local_integrationhub'), 'alert alert-info');
-}
-else {
+} else {
     echo html_writer::start_tag('div', ['class' => 'table-responsive']);
     // Force text-dark to avoid theme white-text issues
     echo html_writer::start_tag('table', ['class' => 'table table-striped table-hover', 'style' => 'color: #212529 !important;']);
@@ -303,11 +301,9 @@ else {
         $svc = $services[$rule->serviceid] ?? null;
         if ($svc && isset($svc->type) && $svc->type === 'amqp') {
             echo '<td><span class="badge bg-warning text-dark">AMQP</span></td>';
-        }
-        else if ($svc && isset($svc->type) && $svc->type === 'soap') {
+        } else if ($svc && isset($svc->type) && $svc->type === 'soap') {
             echo '<td><span class="badge bg-secondary">SOAP</span></td>';
-        }
-        else {
+        } else {
             // Default to REST method (blue).
             $method = $rule->http_method ?: 'POST';
             $badgeclass = 'bg-info text-dark';
@@ -323,7 +319,7 @@ else {
             echo '<td><span class="badge ' . $badgeclass . '">' . s($method) . '</span></td>';
         }
 
-        echo '<td>' . ($rule->endpoint ?html_writer::tag('code', s($rule->endpoint)) : '<span class="text-muted">Default</span>') . '</td>';
+        echo '<td>' . ($rule->endpoint ? html_writer::tag('code', s($rule->endpoint)) : '<span class="text-muted">Default</span>') . '</td>';
 
         $statusclass = $rule->enabled ? 'badge bg-success' : 'badge bg-secondary';
         $statuslabel = $rule->enabled ? get_string('status_active', 'local_integrationhub') : get_string('status_disabled', 'local_integrationhub');
