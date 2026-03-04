@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2026-03-04
+### Fixed
+- **Dashboard charts not rendering** (`index.php`): `$PAGE->requires->js()` for Chart.js was called after `$OUTPUT->header()`, causing the `<head>` to be emitted before the script tag was registered. As a result `Chart` was always undefined and both canvas elements rendered blank. Fixed by moving the require call to before `$OUTPUT->header()`.
+- **Incorrect `avg_latency` calculation** (`index.php`): The `AVG(latency_ms)` query lacked a `LIMIT`, so it averaged all historical records instead of the last 50 as intended. Fixed by wrapping the selection in a subquery with `ORDER BY timecreated DESC LIMIT 50`.
+
 ## [2.0.0] The Post Revision Update - 2026-02-26
 ### Repository
 **Original Repository Name Changed**: Name changed to moodle-local_integrationhub for consistent developer experience

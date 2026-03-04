@@ -21,3 +21,4 @@ error_ci.txt
 /moodle_cs
 CodeSniffer.conf
 /issues_resolver/
+/cli/test_dashboard_stats.php
