@@ -9,6 +9,8 @@ A centralized integration layer for Moodle™ that allows connecting platform ev
 
 ---
 
+ # **Officially published on Moodle.org:** [local_integrationhub](https://moodle.org/plugins/local_integrationhub) 🎉
+
 ## Overview
 
 **Integration Hub for Moodle™ (MIH)** is a local plugin that provides a centralized gateway for external integrations.  
