@@ -5,7 +5,7 @@
 
 A centralized integration layer for Moodle™ that allows connecting platform events to external services without writing boilerplate code.
 
-[![Moodle](https://img.shields.io/badge/Moodle-4.1%2B-orange)](https://moodle.org)  [![PHP](https://img.shields.io/badge/PHP-8.0%2B-blue)](https://php.net)  [![License](https://img.shields.io/badge/License-GPL%20v3-green)](LICENSE)
+[![Moodle](https://img.shields.io/badge/Moodle-4.1%2B-orange)](https://moodle.org)  [![PHP](https://img.shields.io/badge/PHP-8.0%2B-blue)](https://php.net)  [![License](https://img.shields.io/badge/License-GPL%20v3-green)](LICENSE) ![Published on Moodle.org](https://img.shields.io/badge/Published%20on-Moodle.org-green)
 
 ---
 
