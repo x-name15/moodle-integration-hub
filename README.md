@@ -68,14 +68,11 @@ composer install --no-dev
 
 ## 🗺️ Future Roadmap
 
-- [ ] Webhook Firewall
-- [ ] Better stability
-- [ ] Webhook ingress (receive events from external services)
-- [ ] Kafka support
-- [ ] GraphQL support
-- [ ] Advanced retry policies (jitter, custom strategies)
+The full roadmap is available here: [https://mih.mrjacket.dev/docs/roadmap](https://mih.mrjacket.dev/docs/roadmap)
 
----
+Upcoming updates:
+- [ ] Webhook Firewall
+- [ ] Webhook Ingress (receive events from external services)
 
 *License: GPL v3*
 
