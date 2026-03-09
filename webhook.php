@@ -38,6 +38,7 @@ require(__DIR__ . '/../../config.php');
 
 use local_integrationhub\service\registry as service_registry;
 use local_integrationhub\webhook_handler;
+use local_integrationhub\rate_limiter;
 
 header('Content-Type: application/json');
 
@@ -54,6 +55,35 @@ $serviceslug = optional_param('service', '', PARAM_ALPHANUMEXT);
 if (empty($serviceslug)) {
     http_response_code(400);
     echo json_encode(['success' => false, 'error' => get_string('webhook_missing_service', 'local_integrationhub')]);
+    exit;
+}
+
+// 1.5. Apply rate limiting to prevent abuse.
+$clientip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+$identifier = "webhook_{$clientip}_{$serviceslug}";
+
+// Get rate limit configuration from settings.
+$ratelimit = (int)get_config('local_integrationhub', 'webhook_rate_limit');
+if ($ratelimit <= 0) {
+    $ratelimit = 100; // Default: 100 requests per window.
+}
+$ratewindow = (int)get_config('local_integrationhub', 'webhook_rate_window');
+if ($ratewindow <= 0) {
+    $ratewindow = 60; // Default: 60 seconds.
+}
+
+if (!rate_limiter::is_allowed($identifier, $ratelimit, $ratewindow)) {
+    http_response_code(429); // Too Many Requests.
+    $remaining = rate_limiter::get_remaining($identifier, $ratelimit);
+
+    header('X-RateLimit-Limit: ' . $ratelimit);
+    header('X-RateLimit-Remaining: ' . $remaining);
+    header('Retry-After: ' . $ratewindow);
+
+    echo json_encode([
+        'success' => false,
+        'error' => get_string('webhook_rate_limited', 'local_integrationhub'),
+    ]);
     exit;
 }
 

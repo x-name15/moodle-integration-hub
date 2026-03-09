@@ -24,9 +24,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2026030400; // YYYYMMDDXX format.
+$plugin->version = 2026030901; // YYYYMMDDXX format.
 $plugin->requires = 2022112800; // Moodle 4.1+.
 $plugin->supported = [401, 501]; // Moodle 4.1 to 5.1.
 $plugin->component = 'local_integrationhub';
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = '2.0.1';
+$plugin->release = '2.1.0';

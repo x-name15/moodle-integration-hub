@@ -33,6 +33,13 @@ use local_integrationhub\service\retry_policy;
  *   // Or Fluent:
  *   \local_integrationhub\mih::send('judgeman')->to('/execute')->with(['code' => $code])->dispatch();
  *
+ *   // Supported HTTP methods: GET, POST, PUT, PATCH, DELETE
+ *   \local_integrationhub\mih::send('api')->to('/users/123')->method('PATCH')->with(['name' => 'Updated'])->dispatch();
+ *
+ *   // GET requests automatically convert payload to query parameters:
+ *   \local_integrationhub\mih::send('api')->to('/search')->method('GET')->with(['q' => 'moodle', 'limit' => 10])->dispatch();
+ *   // Results in: https://api.example.com/search?q=moodle&limit=10
+ *
  * @package    local_integrationhub
  * @copyright  2026 Integration Hub Contributors
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -228,27 +235,69 @@ class mih
         try {
             $DB->insert_record(self::LOG_TABLE, $log);
 
-            // Auto-purge old logs to prevent DB bloat.
-            $maxlogs = (int)get_config('local_integrationhub', 'max_log_entries');
-            if ($maxlogs <= 0) {
-                $maxlogs = 500; // Fallback default.
-            }
-            $total = $DB->count_records(self::LOG_TABLE);
-            if ($total > $maxlogs) {
-                // Find the cutoff: get the timecreated of the Nth newest log.
-                $cutoff = $DB->get_field_sql(
-                    "SELECT timecreated FROM {" . self::LOG_TABLE . "}
-                     ORDER BY timecreated DESC
-                     LIMIT 1 OFFSET ?",
-                    [$maxlogs - 1]
-                );
-                if ($cutoff) {
-                    $DB->delete_records_select(self::LOG_TABLE, 'timecreated < ?', [$cutoff]);
-                }
-            }
+            // Auto-purge old logs when limit is exceeded.
+            // Optimized: only check every N logs to avoid COUNT(*) overhead on every request.
+            $this->maybe_purge_logs();
         } catch (\Exception $e) {
             // Don't let logging failures break the request flow.
             debugging('Integration Hub: Failed to log request: ' . $e->getMessage(), DEBUG_DEVELOPER);
+        }
+    }
+
+    /**
+     * Conditionally purge old logs if the configured limit is exceeded.
+     *
+     * Uses caching to avoid expensive COUNT(*) queries on every request.
+     * Only performs actual count and purge every N inserts (configurable).
+     */
+    private function maybe_purge_logs(): void {
+        global $DB;
+
+        // Get configuration.
+        $maxlogs = (int)get_config('local_integrationhub', 'max_log_entries');
+        if ($maxlogs <= 0) {
+            $maxlogs = 500; // Default.
+        }
+
+        $checkfrequency = (int)get_config('local_integrationhub', 'log_purge_check_frequency');
+        if ($checkfrequency <= 0) {
+            $checkfrequency = 50; // Default: check every 50 inserts.
+        }
+
+        // Use cache to track insert count and avoid COUNT(*) on every request.
+        $cache = \cache::make('local_integrationhub', 'log_counter');
+        $counter = $cache->get('insert_count');
+
+        if ($counter === false) {
+            $counter = 0;
+        }
+
+        $counter++;
+        $cache->set('insert_count', $counter);
+
+        // Only check and purge every N inserts.
+        if ($counter < $checkfrequency) {
+            return;
+        }
+
+        // Reset counter.
+        $cache->set('insert_count', 0);
+
+        // Now do the actual count and purge if needed.
+        $total = $DB->count_records(self::LOG_TABLE);
+
+        if ($total > $maxlogs) {
+            // Find cutoff: get timecreated of the Nth newest log.
+            $cutoff = $DB->get_field_sql(
+                "SELECT timecreated FROM {" . self::LOG_TABLE . "}
+                 ORDER BY timecreated DESC
+                 LIMIT 1 OFFSET ?",
+                [$maxlogs - 1]
+            );
+
+            if ($cutoff) {
+                $DB->delete_records_select(self::LOG_TABLE, 'timecreated < ?', [$cutoff]);
+            }
         }
     }
 

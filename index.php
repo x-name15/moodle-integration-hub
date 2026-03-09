@@ -52,6 +52,7 @@ if ($canmanage && $action === 'save' && confirm_sesskey()) {
     $data->base_url = required_param('base_url', PARAM_TEXT);
     $data->auth_type = required_param('auth_type', PARAM_ALPHA);
     $data->auth_token = optional_param('auth_token', '', PARAM_TEXT);
+    $data->custom_headers = optional_param('custom_headers', '', PARAM_TEXT);
     $data->timeout = optional_param('timeout', 5, PARAM_INT);
     $data->max_retries = optional_param('max_retries', 3, PARAM_INT);
     $data->retry_backoff = optional_param('retry_backoff', 1, PARAM_INT);
@@ -506,6 +507,25 @@ foreach ($fields as $field) {
     echo '</div>';
 }
 
+echo '</div>'; // Row.
+
+// Custom Headers textarea (after all standard fields).
+echo '<div class="row">';
+echo '<div class="col-12 mb-3">';
+echo html_writer::tag('label', get_string('custom_headers', 'local_integrationhub'), [
+    'for' => 'ih-custom_headers', 'class' => 'form-label', 'style' => 'display:block; margin-bottom:6px;',
+]);
+echo html_writer::tag('textarea', $editservice->custom_headers ?? '', [
+    'name' => 'custom_headers',
+    'id' => 'ih-custom_headers',
+    'class' => 'form-control',
+    'rows' => '4',
+    'placeholder' => '{"X-Custom-Header": "value", "X-Another-Header": "value2"}',
+]);
+echo html_writer::tag('div', get_string('custom_headers_help', 'local_integrationhub'), [
+    'class' => 'form-text text-muted',
+]);
+echo '</div>';
 echo '</div>'; // Row.
 
 // Form buttons.

@@ -68,12 +68,44 @@ if ($hassiteconfig) {
         PARAM_INT
     ));
 
+    // Log purge check frequency.
+    $settings->add(new admin_setting_configtext(
+        'local_integrationhub/log_purge_check_frequency',
+        get_string('log_purge_check_frequency', 'local_integrationhub'),
+        get_string('log_purge_check_frequency_desc', 'local_integrationhub'),
+        50,
+        PARAM_INT
+    ));
+
     // Limit for 'Sent Events' tab.
     $settings->add(new admin_setting_configtext(
         'local_integrationhub/latest_events_limit',
         get_string('latest_events_limit', 'local_integrationhub'),
         get_string('latest_events_limit_desc', 'local_integrationhub'),
         50,
+        PARAM_INT
+    ));
+
+    // Webhook rate limiting settings.
+    $settings->add(new admin_setting_heading(
+        'local_integrationhub/ratelimitheading',
+        get_string('ratelimit_heading', 'local_integrationhub'),
+        get_string('ratelimit_heading_desc', 'local_integrationhub')
+    ));
+
+    $settings->add(new admin_setting_configtext(
+        'local_integrationhub/webhook_rate_limit',
+        get_string('webhook_rate_limit', 'local_integrationhub'),
+        get_string('webhook_rate_limit_desc', 'local_integrationhub'),
+        100,
+        PARAM_INT
+    ));
+
+    $settings->add(new admin_setting_configtext(
+        'local_integrationhub/webhook_rate_window',
+        get_string('webhook_rate_window', 'local_integrationhub'),
+        get_string('webhook_rate_window_desc', 'local_integrationhub'),
+        60,
         PARAM_INT
     ));
 

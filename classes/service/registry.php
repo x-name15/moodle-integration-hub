@@ -82,6 +82,7 @@ class registry
         $record->base_url = clean_param($data->base_url, PARAM_RAW_TRIMMED); // Allow amqp:// schemes.
         $record->auth_type = clean_param($data->auth_type ?? 'bearer', PARAM_ALPHA);
         $record->auth_token = $data->auth_token ?? '';
+        $record->custom_headers = self::validate_custom_headers($data->custom_headers ?? '');
         $record->timeout = (int)($data->timeout ?? 5);
         $record->max_retries = (int)($data->max_retries ?? 3);
         $record->retry_backoff = (int)($data->retry_backoff ?? 1);
@@ -131,6 +132,9 @@ class registry
         if (isset($data->auth_token)) {
             $record->auth_token = $data->auth_token;
         }
+        if (isset($data->custom_headers)) {
+            $record->custom_headers = self::validate_custom_headers($data->custom_headers);
+        }
         if (isset($data->timeout)) {
             $record->timeout = (int)$data->timeout;
         }
@@ -172,5 +176,43 @@ class registry
         $DB->delete_records('local_integrationhub_dlq', ['serviceid' => $id]);
 
         return $DB->delete_records(self::TABLE, ['id' => $id]);
+    }
+
+    /**
+     * Validate and sanitize custom headers JSON.
+     *
+     * @param string $json JSON string of custom headers.
+     * @return string Validated JSON or empty string.
+     * @throws \moodle_exception If JSON is invalid.
+     */
+    private static function validate_custom_headers(string $json): string {
+        $json = trim($json);
+
+        if (empty($json)) {
+            return '';
+        }
+
+        // Validate JSON format.
+        $headers = json_decode($json, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new \moodle_exception('custom_headers_invalid', 'local_integrationhub');
+        }
+
+        // Ensure it's an object/associative array.
+        if (!is_array($headers) || array_values($headers) === $headers) {
+            throw new \moodle_exception('custom_headers_invalid', 'local_integrationhub');
+        }
+
+        // Prevent override of critical headers.
+        $forbidden = ['authorization', 'content-type', 'accept'];
+        foreach (array_keys($headers) as $key) {
+            if (in_array(strtolower($key), $forbidden)) {
+                throw new \moodle_exception('custom_headers_forbidden', 'local_integrationhub', '', $key);
+            }
+        }
+
+        // Re-encode to ensure clean JSON.
+        return json_encode($headers);
     }
 }

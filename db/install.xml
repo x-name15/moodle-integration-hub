@@ -14,6 +14,7 @@
         <FIELD NAME="base_url"           TYPE="char" LENGTH="1333" NOTNULL="true" COMMENT="Base URL of the service"/>
         <FIELD NAME="auth_type"          TYPE="char" LENGTH="20"  NOTNULL="true" DEFAULT="bearer" COMMENT="bearer or apikey"/>
         <FIELD NAME="auth_token"         TYPE="text" NOTNULL="false" COMMENT="Token or API key (encrypted)"/>
+        <FIELD NAME="custom_headers"     TYPE="text" NOTNULL="false" COMMENT="JSON object of custom HTTP headers"/>
         <FIELD NAME="timeout"            TYPE="int"  LENGTH="5"  NOTNULL="true" DEFAULT="5" COMMENT="Request timeout in seconds"/>
         <FIELD NAME="max_retries"        TYPE="int"  LENGTH="3"  NOTNULL="true" DEFAULT="3" COMMENT="Maximum retry attempts"/>
         <FIELD NAME="retry_backoff"      TYPE="int"  LENGTH="5"  NOTNULL="true" DEFAULT="1" COMMENT="Initial backoff seconds (exponential)"/>

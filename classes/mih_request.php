@@ -73,7 +73,9 @@ class mih_request
     /**
      * Set the HTTP method (optional, defaults to POST).
      *
-     * @param string $method E.g. 'GET', 'PUT'.
+     * Supported methods: GET, POST, PUT, PATCH, DELETE.
+     *
+     * @param string $method E.g. 'GET', 'PUT', 'PATCH'.
      * @return self
      */
     public function method(string $method): self {

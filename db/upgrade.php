@@ -56,5 +56,28 @@ function xmldb_local_integrationhub_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026021803, 'local', 'integrationhub');
     }
 
+    if ($oldversion < 2026030901) {
+        // Define field custom_headers to be added to local_integrationhub_svc.
+        $table = new xmldb_table('local_integrationhub_svc');
+        $field = new xmldb_field(
+            'custom_headers',
+            XMLDB_TYPE_TEXT,
+            null,
+            null,
+            null,
+            null,
+            null,
+            'auth_token'
+        );
+
+        // Conditionally launch add field custom_headers.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Integration Hub savepoint reached.
+        upgrade_plugin_savepoint(true, 2026030901, 'local', 'integrationhub');
+    }
+
     return true;
 }

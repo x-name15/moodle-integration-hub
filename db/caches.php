@@ -31,4 +31,16 @@ $definitions = [
         'simpledata' => true, // Simple boolean/timestamp data.
         'ttl' => 60, // 1 minute deduplication window.
     ],
+    'rate_limit' => [
+        'mode' => cache_store::MODE_APPLICATION,
+        'simplekeys' => true,
+        'simpledata' => false, // Array data with count and timestamp.
+        'ttl' => 300, // 5 minutes for auto-cleanup.
+    ],
+    'log_counter' => [
+        'mode' => cache_store::MODE_APPLICATION,
+        'simplekeys' => true,
+        'simpledata' => true, // Simple integer counter.
+        'ttl' => 0, // No expiration - persistent counter.
+    ],
 ];

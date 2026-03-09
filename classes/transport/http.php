@@ -56,6 +56,16 @@ class http implements contract
             }
         }
 
+        // Add custom headers if configured.
+        if (!empty($service->custom_headers)) {
+            $customheaders = json_decode($service->custom_headers, true);
+            if (is_array($customheaders)) {
+                foreach ($customheaders as $key => $value) {
+                    $headers[] = $key . ': ' . $value;
+                }
+            }
+        }
+
         $jsonpayload = !empty($payload) ? json_encode($payload) : '';
         $method = strtoupper($method) ?: 'POST';
 
@@ -81,12 +91,19 @@ class http implements contract
                 case 'PUT':
                     $resp = $curl->put($url, ['data' => $jsonpayload]);
                     break;
+                case 'PATCH':
+                    $resp = $curl->patch($url, $jsonpayload);
+                    break;
                 case 'DELETE':
                     $resp = $curl->delete($url, ['data' => $jsonpayload]);
                     break;
                 case 'GET':
                 default:
-                    $resp = $curl->get($url, !empty($payload) ? $payload : []);
+                    // For GET, append payload as query parameters.
+                    if (!empty($payload)) {
+                        $url = $this->build_url_with_query($url, $payload);
+                    }
+                    $resp = $curl->get($url);
                     break;
             }
 
@@ -108,5 +125,23 @@ class http implements contract
         } catch (\Exception $e) {
             return $this->error_result($e->getMessage(), $starttime, $attempts, 0);
         }
+    }
+
+    /**
+     * Build URL with query parameters for GET requests.
+     *
+     * @param string $url Base URL
+     * @param array $params Query parameters
+     * @return string URL with query string appended
+     */
+    private function build_url_with_query(string $url, array $params): string {
+        if (empty($params)) {
+            return $url;
+        }
+
+        $querystring = http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+        $separator = (strpos($url, '?') === false) ? '?' : '&';
+
+        return $url . $separator . $querystring;
     }
 }
