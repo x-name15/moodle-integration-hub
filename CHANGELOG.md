@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🚀 Beta Development: Security & API Enhancements
 
-This release introduces critical security features (rate limiting), performance optimizations (intelligent log purging), and significant API improvements (PATCH support, custom headers, automatic query string conversion for GET requests).
+This Beta Development Branch critical security features (rate limiting), performance optimizations (intelligent log purging), and significant API improvements (PATCH support, custom headers, automatic query string conversion for GET requests).
 
 **Database Schema Version:** 2026030901
 
